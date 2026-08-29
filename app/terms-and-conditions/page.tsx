@@ -187,7 +187,7 @@ export default function TermsAndConditionsPage() {
             <section>
               <h2 className={headingClass}>Contact us</h2>
               <p className="mt-4">To resolve a complaint or request more information about use of the Site, contact:</p>
-              <address className="mt-4 border-l-2 border-[#c18d3d] pl-5 not-italic">Coastal Route Coffee<br />P.O. Box 74312<br />San Clemente, CA 92673<br />United States<br /><a className={linkClass} href="tel:+19494310683">949-431-0683</a><br /><a className={linkClass} href="mailto:coastalroutecoffee@gmail.com">coastalroutecoffee@gmail.com</a></address>
+              <address className="mt-4 border-l-2 border-[#c18d3d] pl-5 not-italic">Coastal Route Coffee<br />211 Calle Dorado<br />San Clemente, CA 92672<br />United States<br /><a className={linkClass} href="tel:+19494310683">949-431-0683</a><br /><a className={linkClass} href="mailto:coastalroutecoffee@gmail.com">coastalroutecoffee@gmail.com</a></address>
             </section>
           </div>
         </article>
