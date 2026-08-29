@@ -195,7 +195,7 @@ export default function PrivacyPolicyPage() {
             <section id="section-14" className={sectionClass}>
               <h2 className={headingClass}>14. How can you contact us about this notice?</h2>
               <p className="mt-3">Email <a className={linkClass} href="mailto:coastalroutecoffee@gmail.com">coastalroutecoffee@gmail.com</a> or write to:</p>
-              <address className="mt-4 border-l-2 border-[#c18d3d] pl-5 not-italic">Coastal Route Coffee<br />P.O. Box 74312<br />San Clemente, CA 92673<br />United States</address>
+              <address className="mt-4 border-l-2 border-[#c18d3d] pl-5 not-italic">Coastal Route Coffee<br />211 Calle Dorado<br />San Clemente, CA 92672<br />United States</address>
             </section>
 
             <section id="section-15" className={sectionClass}>
