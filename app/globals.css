@@ -1,11 +1,11 @@
 @import "tailwindcss";
 
 :root {
-  --ink: #16221f;
-  --paper: #f5f0e7;
-  --sand: #e4d8c4;
-  --ocean: #234d50;
-  --sun: #d59b45;
+  --ink: #102638;
+  --paper: #f6f0e5;
+  --sand: #e8dfcf;
+  --ocean: #17364f;
+  --sun: #d5a04d;
 }
 
 * {
@@ -21,6 +21,7 @@ body {
   background: var(--paper);
   color: var(--ink);
   font-family: "Avenir Next", Avenir, "Helvetica Neue", Arial, sans-serif;
+  text-rendering: optimizeLegibility;
 }
 
 ::selection {
@@ -29,7 +30,9 @@ body {
 }
 
 .font-display {
-  font-family: Iowan Old Style, Baskerville, "Times New Roman", serif;
+  font-family: "Arial Narrow", "Avenir Next Condensed", Impact, sans-serif;
+  font-stretch: condensed;
+  font-weight: 800;
 }
 
 .eyebrow {
@@ -39,32 +42,25 @@ body {
   text-transform: uppercase;
 }
 
-.route-mark {
+.site-header {
   position: relative;
-  display: inline-grid;
-  height: 2.7rem;
-  width: 2.7rem;
-  place-items: center;
-  border: 1px solid currentColor;
-  border-radius: 50%;
-  font-family: Iowan Old Style, Baskerville, serif;
-  font-size: 1rem;
-  font-weight: 700;
+  z-index: 20;
+  display: flex;
+  width: min(100% - 3rem, 80rem);
+  min-height: 5.5rem;
+  margin-inline: auto;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--ink);
 }
 
-.route-mark::after {
-  position: absolute;
-  right: -0.16rem;
-  bottom: 0.15rem;
-  height: 0.65rem;
-  width: 0.65rem;
-  border-radius: 999px;
-  background: var(--sun);
-  content: "";
+.site-header-dark {
+  color: white;
 }
 
 .button-primary,
-.button-secondary {
+.button-secondary,
+.button-dark {
   display: inline-flex;
   min-height: 3.25rem;
   align-items: center;
@@ -89,9 +85,83 @@ body {
   color: white;
 }
 
+.button-dark {
+  background: var(--ink);
+  color: white;
+}
+
 .button-primary:hover,
-.button-secondary:hover {
+.button-secondary:hover,
+.button-dark:hover {
   transform: translateY(-2px);
+}
+
+.footer-heading {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.cart-button {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  border: 1px solid rgb(16 38 56 / 18%);
+  border-radius: 999px;
+  padding: 0.7rem 1rem;
+  background: #fffdf8;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.option-button {
+  display: flex;
+  min-height: 3.8rem;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  border: 1px solid rgb(16 38 56 / 14%);
+  border-radius: 0.85rem;
+  padding: 0.65rem 0.8rem;
+  background: transparent;
+  font-size: 0.76rem;
+  font-weight: 750;
+  transition: border-color 160ms ease, background-color 160ms ease;
+}
+
+.option-button:hover,
+.option-button[data-selected="true"] {
+  border-color: var(--ink);
+  background: #eee4d3;
+}
+
+.quantity-button {
+  display: inline-grid;
+  height: 1.8rem;
+  width: 1.8rem;
+  place-items: center;
+  border: 1px solid rgb(16 38 56 / 15%);
+  border-radius: 999px;
+}
+
+.story-copy p:first-child::first-letter {
+  float: left;
+  margin: 0.08em 0.12em 0 0;
+  color: #9b6a2d;
+  font-family: "Arial Narrow", "Avenir Next Condensed", Impact, sans-serif;
+  font-size: 4.4rem;
+  font-weight: 800;
+  line-height: 0.72;
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible {
+  outline: 3px solid #d5a04d;
+  outline-offset: 3px;
 }
 
 .button-secondary:hover {
@@ -111,4 +181,10 @@ body {
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { transition-duration: 0.01ms !important; }
+}
+
+@media (max-width: 640px) {
+  .site-header {
+    width: min(100% - 2rem, 80rem);
+  }
 }

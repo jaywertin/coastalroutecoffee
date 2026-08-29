@@ -2,9 +2,13 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Coastal Route Coffee | Take the Scenic Route",
+  title: {
+    default: "Coastal Route Coffee | Take the Scenic Route",
+    template: "%s",
+  },
   description:
-    "Small-batch specialty coffee roasted for slow mornings, open roads, and the places worth taking your time to reach.",
+    "Small-batch whole-bean coffee roasted in San Clemente for slow mornings, open roads, and the places worth taking your time to reach.",
+  metadataBase: new URL("https://coastalroutecoffee.vercel.app"),
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
