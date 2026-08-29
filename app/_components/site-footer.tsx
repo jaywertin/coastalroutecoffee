@@ -21,6 +21,7 @@ export function SiteFooter() {
             <Link href="/shop">Shop coffee</Link>
             <Link href="/our-story">Our story</Link>
             <Link href="/shipping">Shipping & local delivery</Link>
+            <Link href="/return-policy">Return policy</Link>
           </div>
         </div>
         <div>
