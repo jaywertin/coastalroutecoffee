@@ -18,7 +18,7 @@ export default function Home() {
         <div className="relative z-10 mx-auto flex min-h-[690px] max-w-7xl items-center px-6 pb-16 lg:px-10">
           <div className="max-w-2xl pt-8">
             <p className="eyebrow mb-6 text-[#e2b45d]">Coffee for the long way around</p>
-            <h1 className="font-display text-[4.5rem] leading-[0.86] tracking-[-0.055em] sm:text-7xl lg:text-[7.3rem]">Slow down.<br /><em className="font-normal">Taste more.</em></h1>
+            <h1 className="font-display text-[3.25rem] leading-[0.86] tracking-[-0.055em] sm:text-7xl lg:text-[7.3rem]">The Road to<br /><em className="font-normal">Better Coffee.</em></h1>
             <p className="mt-8 max-w-lg text-base leading-7 text-white/76 sm:text-lg">Thoughtfully roasted whole-bean coffee inspired by the wild coast and the roads worth taking your time to travel.</p>
             <div className="mt-9 flex flex-wrap gap-3">
               <Link href="/shop" className="button-primary">Shop whole-bean coffee <Arrow /></Link>
