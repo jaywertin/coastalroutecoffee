@@ -23,6 +23,7 @@ export function SiteFooter() {
             <Link href="/shipping">Shipping & local delivery</Link>
             <Link href="/return-policy">Return policy</Link>
             <Link href="/privacy-policy">Privacy policy</Link>
+            <Link href="/terms-and-conditions">Terms &amp; conditions</Link>
           </div>
         </div>
         <div>
