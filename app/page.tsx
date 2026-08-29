@@ -77,7 +77,7 @@ export default function Home() {
               <ul className="mt-8 grid gap-4 text-sm text-white/85">
                 <li className="flex gap-3"><span className="text-[#e2b45d]">✓</span> A different roaster’s selection</li>
                 <li className="flex gap-3"><span className="text-[#e2b45d]">✓</span> Freshly roasted in San Clemente</li>
-                <li className="flex gap-3"><span className="text-[#e2b45d]">✓</span> Pause or cancel anytime</li>
+                <li className="flex gap-3"><span className="text-[#e2b45d]">✓</span> Cancel anytime; email coastalroutecoffee@gmail.com to pause</li>
               </ul>
               <Link href="/shop" className="button-primary mt-10">Choose your subscription <Arrow /></Link>
             </div>

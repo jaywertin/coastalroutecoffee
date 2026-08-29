@@ -62,7 +62,7 @@ function ProductCard({ product, onAdd }: { product: Product; onAdd: (product: Pr
           </div>
         </fieldset>
 
-        <p className="mt-4 text-xs text-[#102638]/52">Whole bean · {selected.purchaseType === "subscription" ? "Pause or cancel anytime" : "Single purchase"}</p>
+        <p className="mt-4 text-xs text-[#102638]/52">Whole bean · {selected.purchaseType === "subscription" ? "Cancel anytime; email us to pause" : "Single purchase"}</p>
         <button type="button" className="mt-5 w-full rounded-full bg-[#102638] px-5 py-4 text-xs font-extrabold tracking-[0.13em] text-white uppercase transition hover:-translate-y-0.5 hover:bg-[#17364f]" onClick={() => onAdd(product, selected)}>
           Add to cart · {formatPrice(selected.price)}
         </button>
