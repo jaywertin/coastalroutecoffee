@@ -88,19 +88,23 @@ export async function POST(request: Request) {
       success_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/checkout/canceled`,
       shipping_address_collection: { allowed_countries: ["US"] },
-      shipping_options: [
-        {
-          shipping_rate_data: {
-            type: "fixed_amount",
-            fixed_amount: { amount: 0, currency: "usd" },
-            display_name: "Free local delivery",
-            delivery_estimate: {
-              minimum: { unit: "business_day", value: 3 },
-              maximum: { unit: "business_day", value: 5 },
-            },
-          },
-        },
-      ],
+      ...(mode === "payment"
+        ? {
+            shipping_options: [
+              {
+                shipping_rate_data: {
+                  type: "fixed_amount" as const,
+                  fixed_amount: { amount: 0, currency: "usd" },
+                  display_name: "Free local delivery",
+                  delivery_estimate: {
+                    minimum: { unit: "business_day" as const, value: 3 },
+                    maximum: { unit: "business_day" as const, value: 5 },
+                  },
+                },
+              },
+            ],
+          }
+        : {}),
       phone_number_collection: { enabled: true },
       custom_text: {
         shipping_address: {
