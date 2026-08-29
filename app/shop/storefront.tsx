@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useMemo, useState } from "react";
 import { formatPrice, type Product, type ProductOption } from "@/lib/products";
+import { isLocalDeliveryZip } from "@/lib/shipping";
 
 type CartItem = {
   key: string;
@@ -73,9 +74,15 @@ function ProductCard({ product, onAdd }: { product: Product; onAdd: (product: Pr
 export function Storefront({ products }: { products: Product[] }) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setCartOpen] = useState(false);
+  const [zip, setZip] = useState("");
+  const [checkoutError, setCheckoutError] = useState("");
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
 
   const itemCount = cart.reduce((total, item) => total + item.quantity, 0);
   const subtotal = useMemo(() => cart.reduce((total, item) => total + item.option.price * item.quantity, 0), [cart]);
+  const normalizedZip = zip.trim();
+  const isCompleteZip = /^\d{5}$/.test(normalizedZip);
+  const isEligibleZip = isCompleteZip && isLocalDeliveryZip(normalizedZip);
 
   function addToCart(product: Product, option: ProductOption) {
     const key = `${product.id}:${option.id}`;
@@ -89,6 +96,34 @@ export function Storefront({ products }: { products: Product[] }) {
 
   function updateQuantity(key: string, quantity: number) {
     setCart((current) => quantity <= 0 ? current.filter((item) => item.key !== key) : current.map((item) => item.key === key ? { ...item, quantity } : item));
+  }
+
+  async function beginCheckout() {
+    if (!cart.length || !isEligibleZip) return;
+    setCheckoutError("");
+    setIsCheckingOut(true);
+
+    try {
+      const response = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          zip: normalizedZip,
+          items: cart.map((item) => ({
+            productId: item.productId,
+            optionId: item.option.id,
+            quantity: item.quantity,
+          })),
+        }),
+      });
+      const data = await response.json() as { url?: string; error?: string };
+
+      if (!response.ok || !data.url) throw new Error(data.error ?? "Could not start checkout.");
+      window.location.assign(data.url);
+    } catch (error) {
+      setCheckoutError(error instanceof Error ? error.message : "Could not start checkout.");
+      setIsCheckingOut(false);
+    }
   }
 
   return (
@@ -137,8 +172,40 @@ export function Storefront({ products }: { products: Product[] }) {
 
             <div className="border-t border-[#102638]/10 pt-5">
               <div className="flex items-center justify-between"><span className="text-sm">Subtotal</span><strong>{formatPrice(subtotal)}</strong></div>
-              <p className="mt-3 text-xs leading-5 text-[#102638]/55">Free local delivery is available in eligible ZIP codes. USPS rates will be calculated before payment once carrier testing is complete.</p>
-              <button type="button" disabled className="mt-5 w-full cursor-not-allowed rounded-full bg-[#102638]/35 px-5 py-4 text-xs font-extrabold tracking-[0.12em] text-white uppercase">Checkout opens after shipping test</button>
+              <div className="mt-5 rounded-2xl border border-[#102638]/10 bg-[#f6f0e5] p-4">
+                <label htmlFor="delivery-zip" className="block text-[0.67rem] font-extrabold tracking-[0.12em] uppercase">Delivery ZIP code</label>
+                <input
+                  id="delivery-zip"
+                  name="delivery-zip"
+                  inputMode="numeric"
+                  autoComplete="postal-code"
+                  maxLength={5}
+                  value={zip}
+                  onChange={(event) => {
+                    setZip(event.target.value.replace(/\D/g, "").slice(0, 5));
+                    setCheckoutError("");
+                  }}
+                  className="mt-2 w-full rounded-xl border border-[#102638]/15 bg-white px-4 py-3 text-base"
+                  placeholder="92672"
+                />
+                <p className={`mt-2 text-xs leading-5 ${isCompleteZip && !isEligibleZip ? "text-[#9d2c22]" : "text-[#102638]/58"}`} aria-live="polite">
+                  {isEligibleZip
+                    ? "Free local delivery is available. Continue to Stripe test checkout."
+                    : isCompleteZip
+                      ? "USPS checkout for this ZIP is coming after carrier-rate testing."
+                      : "Checkout is currently open only for eligible free local-delivery ZIP codes."}
+                </p>
+              </div>
+              <p className="mt-3 text-xs leading-5 text-[#102638]/55">Stripe sandbox only · no real payment will be processed. Use the same eligible ZIP address in Stripe.</p>
+              {checkoutError ? <p className="mt-3 text-xs leading-5 text-[#9d2c22]" role="alert">{checkoutError}</p> : null}
+              <button
+                type="button"
+                disabled={!cart.length || !isEligibleZip || isCheckingOut}
+                className="mt-5 w-full rounded-full bg-[#102638] px-5 py-4 text-xs font-extrabold tracking-[0.12em] text-white uppercase transition enabled:hover:bg-[#17364f] disabled:cursor-not-allowed disabled:bg-[#102638]/35"
+                onClick={beginCheckout}
+              >
+                {isCheckingOut ? "Opening Stripe…" : "Continue to secure test checkout"}
+              </button>
             </div>
           </aside>
         </div>
