@@ -29,7 +29,6 @@ export default async function CheckoutSuccessPage({ searchParams }: { searchPara
   }
 
   const total = session ? formatTotal(session.amount_total, session.currency) : null;
-  const tax = session ? formatTotal(session.total_details?.amount_tax ?? 0, session.currency) : null;
 
   return (
     <main>
@@ -44,7 +43,6 @@ export default async function CheckoutSuccessPage({ searchParams }: { searchPara
 
           <dl className="mt-8 grid gap-4 border-y border-[#102638]/10 py-6 text-sm sm:grid-cols-2">
             {total ? <div><dt className="font-bold">Order total</dt><dd className="mt-1 text-[#102638]/62">{total}</dd></div> : null}
-            {tax ? <div><dt className="font-bold">Sales tax</dt><dd className="mt-1 text-[#102638]/62">{tax}</dd></div> : null}
             {session?.customer_details?.email ? <div><dt className="font-bold">Confirmation email</dt><dd className="mt-1 break-all text-[#102638]/62">{session.customer_details.email}</dd></div> : null}
             <div><dt className="font-bold">Delivery</dt><dd className="mt-1 text-[#102638]/62">Free local delivery · 3–5 business days</dd></div>
             <div><dt className="font-bold">Status</dt><dd className="mt-1 text-[#102638]/62">Test mode</dd></div>

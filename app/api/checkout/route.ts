@@ -85,7 +85,6 @@ export async function POST(request: Request) {
           ...(option.purchaseType === "subscription" ? { recurring: { interval: "month" as const } } : {}),
         },
       })),
-      automatic_tax: { enabled: true },
       success_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/checkout/canceled`,
       shipping_address_collection: { allowed_countries: ["US"] },
