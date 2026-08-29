@@ -127,6 +127,20 @@ export async function POST(request: Request) {
       return Response.json({ error: "Your cart contains an unavailable item." }, { status: 400 });
     }
 
+    if (error instanceof Stripe.errors.StripeError) {
+      console.error("Stripe checkout session creation failed", {
+        type: error.type,
+        code: error.code,
+        message: error.message,
+        requestId: error.requestId,
+      });
+    } else if (error instanceof Error) {
+      console.error("Checkout session creation failed", {
+        name: error.name,
+        message: error.message,
+      });
+    }
+
     const message = error instanceof Error && [
       "Stripe sandbox is not configured yet.",
       "Stripe checkout is locked to sandbox mode.",
