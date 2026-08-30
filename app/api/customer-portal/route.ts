@@ -8,9 +8,16 @@ export async function POST(request: Request) {
     const sessionId = body && typeof body === "object" && "sessionId" in body
       ? (body as { sessionId?: unknown }).sessionId
       : undefined;
+    const action = body && typeof body === "object" && "action" in body
+      ? (body as { action?: unknown }).action
+      : "manage";
 
     if (typeof sessionId !== "string" || !sessionId.startsWith("cs_")) {
       return Response.json({ error: "Invalid checkout session." }, { status: 400 });
+    }
+
+    if (action !== "manage" && action !== "cancel") {
+      return Response.json({ error: "Invalid subscription action." }, { status: 400 });
     }
 
     const stripe = getStripe();
@@ -18,15 +25,31 @@ export async function POST(request: Request) {
     const customerId = typeof checkoutSession.customer === "string"
       ? checkoutSession.customer
       : checkoutSession.customer?.id;
+    const subscriptionId = typeof checkoutSession.subscription === "string"
+      ? checkoutSession.subscription
+      : checkoutSession.subscription?.id;
 
-    if (!customerId || checkoutSession.mode !== "subscription") {
+    if (!customerId || !subscriptionId || checkoutSession.mode !== "subscription") {
       return Response.json({ error: "No subscription was found for this order." }, { status: 400 });
     }
 
     const origin = new URL(request.url).origin;
+    const returnUrl = `${origin}/checkout/success?session_id=${encodeURIComponent(sessionId)}`;
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: customerId,
-      return_url: `${origin}/checkout/success?session_id=${encodeURIComponent(sessionId)}`,
+      return_url: returnUrl,
+      ...(action === "cancel"
+        ? {
+            flow_data: {
+              type: "subscription_cancel" as const,
+              subscription_cancel: { subscription: subscriptionId },
+              after_completion: {
+                type: "redirect" as const,
+                redirect: { return_url: `${origin}/checkout/subscription-canceled` },
+              },
+            },
+          }
+        : {}),
     });
 
     return Response.json({ url: portalSession.url });
