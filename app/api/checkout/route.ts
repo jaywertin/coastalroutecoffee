@@ -1,26 +1,17 @@
 import Stripe from "stripe";
-import { products } from "@/lib/products";
-import { isLocalDeliveryZip } from "@/lib/shipping";
+import { hasMixedPurchaseTypes, InvalidCartError, resolveCartItems } from "@/lib/cart";
+import { getEasyPostQuotes, ShippingConfigurationError, ShippingRateError } from "@/lib/easypost";
+import { buildShippingParcels, isLocalDeliveryZip, type ShippingQuote } from "@/lib/shipping";
 import { getStripe } from "@/lib/stripe";
 
 export const runtime = "nodejs";
 
-type CheckoutItem = {
-  productId: string;
-  optionId: string;
-  quantity: number;
-};
-
-function isCheckoutItem(value: unknown): value is CheckoutItem {
-  if (!value || typeof value !== "object") return false;
-  const item = value as Record<string, unknown>;
-  return (
-    typeof item.productId === "string" &&
-    typeof item.optionId === "string" &&
-    Number.isInteger(item.quantity) &&
-    Number(item.quantity) >= 1 &&
-    Number(item.quantity) <= 10
-  );
+function stripeDeliveryEstimate(quote: ShippingQuote) {
+  if (!quote.deliveryDays) return undefined;
+  return {
+    minimum: { unit: "business_day" as const, value: quote.deliveryDays },
+    maximum: { unit: "business_day" as const, value: quote.deliveryDays },
+  };
 }
 
 export async function POST(request: Request) {
@@ -30,61 +21,92 @@ export async function POST(request: Request) {
       return Response.json({ error: "Invalid checkout request." }, { status: 400 });
     }
 
-    const { items, zip } = body as { items?: unknown; zip?: unknown };
+    const { items, zip, shippingRateKey } = body as { items?: unknown; zip?: unknown; shippingRateKey?: unknown };
     const deliveryZip = typeof zip === "string" ? zip.trim() : "";
 
     if (!/^\d{5}$/.test(deliveryZip)) {
       return Response.json({ error: "Enter a valid 5-digit ZIP code." }, { status: 400 });
     }
 
-    if (!isLocalDeliveryZip(deliveryZip)) {
+    const resolvedItems = resolveCartItems(items);
+    if (hasMixedPurchaseTypes(resolvedItems)) {
       return Response.json(
-        { error: "Checkout for this ZIP will open when USPS shipping rates are ready." },
-        { status: 403 },
+        { error: "Please check out subscriptions and one-time purchases separately." },
+        { status: 409 },
       );
     }
 
-    if (!Array.isArray(items) || items.length === 0 || items.length > 20 || !items.every(isCheckoutItem)) {
-      return Response.json({ error: "Your cart contains an invalid item." }, { status: 400 });
-    }
-
-    const resolvedItems = items.map((item) => {
-      const product = products.find((candidate) => candidate.id === item.productId);
-      const option = product?.options.find((candidate) => candidate.id === item.optionId);
-
-      if (!product || !option) throw new Error("INVALID_CART_ITEM");
-      return { product, option, quantity: item.quantity };
-    });
-
     const hasSubscription = resolvedItems.some(({ option }) => option.purchaseType === "subscription");
     const mode: Stripe.Checkout.SessionCreateParams.Mode = hasSubscription ? "subscription" : "payment";
+    const isLocalDelivery = isLocalDeliveryZip(deliveryZip);
+    let shippingQuote: ShippingQuote | null = null;
+
+    if (!isLocalDelivery) {
+      if (typeof shippingRateKey !== "string" || !shippingRateKey) {
+        return Response.json({ error: "Select a USPS shipping option." }, { status: 400 });
+      }
+
+      const parcels = buildShippingParcels(
+        resolvedItems.map(({ option, quantity }) => ({ size: option.size, quantity })),
+      );
+      const quotes = await getEasyPostQuotes(deliveryZip, parcels);
+      shippingQuote = quotes.find((quote) => quote.key === shippingRateKey) ?? null;
+      if (!shippingQuote) {
+        return Response.json({ error: "That shipping quote expired. Please request current rates." }, { status: 409 });
+      }
+    }
+
     const origin = new URL(request.url).origin;
     const orderMetadata = {
-      checkoutPhase: "local-delivery-sandbox",
-      localDeliveryZip: deliveryZip,
+      checkoutPhase: isLocalDelivery ? "local-delivery-sandbox" : "easypost-shipping-sandbox",
+      deliveryZip,
+      shippingType: isLocalDelivery ? "local" : "carrier",
+      shippingCarrier: shippingQuote?.carrier ?? "Local delivery",
+      shippingService: shippingQuote?.service ?? "Free local delivery",
+      shippingAmountCents: String(shippingQuote?.amountCents ?? 0),
+      shippingDeliveryDays: String(shippingQuote?.deliveryDays ?? ""),
     };
+
+    const productLineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = resolvedItems.map(({ product, option, quantity }) => ({
+      quantity,
+      price_data: {
+        currency: "usd",
+        unit_amount: Math.round(option.price * 100),
+        product_data: {
+          name: `${product.name} — ${option.size}`,
+          description: `${product.notes} · Whole bean`,
+          tax_code: "txcd_41050006",
+          metadata: {
+            productId: product.id,
+            optionId: option.id,
+            purchaseType: option.purchaseType,
+            size: option.size,
+          },
+        },
+        ...(option.purchaseType === "subscription" ? { recurring: { interval: "month" as const } } : {}),
+      },
+    }));
+
+    if (hasSubscription && shippingQuote) {
+      productLineItems.push({
+        quantity: 1,
+        price_data: {
+          currency: "usd",
+          unit_amount: shippingQuote.amountCents,
+          recurring: { interval: "month" },
+          product_data: {
+            name: `${shippingQuote.carrier} shipping — ${shippingQuote.service}`,
+            description: "Monthly shipping for your coffee subscription",
+            tax_code: "txcd_92010001",
+            metadata: { shippingRateKey: shippingQuote.key },
+          },
+        },
+      });
+    }
 
     const session = await getStripe().checkout.sessions.create({
       mode,
-      line_items: resolvedItems.map(({ product, option, quantity }) => ({
-        quantity,
-        price_data: {
-          currency: "usd",
-          unit_amount: Math.round(option.price * 100),
-          product_data: {
-            name: `${product.name} — ${option.size}`,
-            description: `${product.notes} · Whole bean`,
-            tax_code: "txcd_41050006",
-            metadata: {
-              productId: product.id,
-              optionId: option.id,
-              purchaseType: option.purchaseType,
-              size: option.size,
-            },
-          },
-          ...(option.purchaseType === "subscription" ? { recurring: { interval: "month" as const } } : {}),
-        },
-      })),
+      line_items: productLineItems,
       success_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/checkout/canceled`,
       shipping_address_collection: { allowed_countries: ["US"] },
@@ -94,11 +116,19 @@ export async function POST(request: Request) {
               {
                 shipping_rate_data: {
                   type: "fixed_amount" as const,
-                  fixed_amount: { amount: 0, currency: "usd" },
-                  display_name: "Free local delivery",
-                  delivery_estimate: {
-                    minimum: { unit: "business_day" as const, value: 3 },
-                    maximum: { unit: "business_day" as const, value: 5 },
+                  fixed_amount: { amount: shippingQuote?.amountCents ?? 0, currency: "usd" },
+                  display_name: shippingQuote
+                    ? `${shippingQuote.carrier} ${shippingQuote.service}`
+                    : "Free local delivery",
+                  delivery_estimate: shippingQuote
+                    ? stripeDeliveryEstimate(shippingQuote)
+                    : {
+                        minimum: { unit: "business_day" as const, value: 3 },
+                        maximum: { unit: "business_day" as const, value: 5 },
+                      },
+                  metadata: {
+                    shippingRateKey: shippingQuote?.key ?? "local-delivery",
+                    destinationZip: deliveryZip,
                   },
                 },
               },
@@ -108,7 +138,9 @@ export async function POST(request: Request) {
       phone_number_collection: { enabled: true },
       custom_text: {
         shipping_address: {
-          message: `Local delivery only. Please use the eligible ZIP code ${deliveryZip} entered in the shop.`,
+          message: isLocalDelivery
+            ? `Local delivery only. Please use the eligible ZIP code ${deliveryZip} entered in the shop.`
+            : `Your USPS rate was calculated for ZIP code ${deliveryZip}. Please use an address with that ZIP code.`,
         },
       },
       metadata: orderMetadata,
@@ -127,8 +159,16 @@ export async function POST(request: Request) {
       return Response.json({ error: "Invalid checkout request." }, { status: 400 });
     }
 
-    if (error instanceof Error && error.message === "INVALID_CART_ITEM") {
-      return Response.json({ error: "Your cart contains an unavailable item." }, { status: 400 });
+    if (error instanceof InvalidCartError) {
+      return Response.json({ error: error.message }, { status: 400 });
+    }
+
+    if (error instanceof ShippingConfigurationError) {
+      return Response.json({ error: error.message }, { status: 503 });
+    }
+
+    if (error instanceof ShippingRateError) {
+      return Response.json({ error: error.message }, { status: 502 });
     }
 
     if (error instanceof Stripe.errors.StripeError) {

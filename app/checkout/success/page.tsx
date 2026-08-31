@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { SiteFooter } from "@/app/_components/site-footer";
 import { SiteHeader } from "@/app/_components/site-header";
+import { formatShippingService } from "@/lib/shipping";
 import { getStripe } from "@/lib/stripe";
 import { CustomerPortalButton } from "./customer-portal-button";
 
@@ -29,6 +30,16 @@ export default async function CheckoutSuccessPage({ searchParams }: { searchPara
   }
 
   const total = session ? formatTotal(session.amount_total, session.currency) : null;
+  const isLocalDelivery = session?.metadata?.shippingType !== "carrier";
+  const shippingCarrier = session?.metadata?.shippingCarrier;
+  const shippingService = session?.metadata?.shippingService;
+  const shippingDays = Number(session?.metadata?.shippingDeliveryDays);
+  const deliveryDescription = isLocalDelivery
+    ? "Free local delivery · 3–5 business days"
+    : [
+        shippingCarrier && shippingService ? `${shippingCarrier} ${formatShippingService(shippingService)}` : "USPS shipping",
+        Number.isFinite(shippingDays) && shippingDays > 0 ? `Estimated ${shippingDays} business ${shippingDays === 1 ? "day" : "days"}` : null,
+      ].filter(Boolean).join(" · ");
 
   return (
     <main>
@@ -44,7 +55,7 @@ export default async function CheckoutSuccessPage({ searchParams }: { searchPara
           <dl className="mt-8 grid gap-4 border-y border-[#102638]/10 py-6 text-sm sm:grid-cols-2">
             {total ? <div><dt className="font-bold">Order total</dt><dd className="mt-1 text-[#102638]/62">{total}</dd></div> : null}
             {session?.customer_details?.email ? <div><dt className="font-bold">Confirmation email</dt><dd className="mt-1 break-all text-[#102638]/62">{session.customer_details.email}</dd></div> : null}
-            <div><dt className="font-bold">Delivery</dt><dd className="mt-1 text-[#102638]/62">Free local delivery · 3–5 business days</dd></div>
+            <div><dt className="font-bold">Delivery</dt><dd className="mt-1 text-[#102638]/62">{deliveryDescription}</dd></div>
             <div><dt className="font-bold">Status</dt><dd className="mt-1 text-[#102638]/62">Test mode</dd></div>
           </dl>
 
