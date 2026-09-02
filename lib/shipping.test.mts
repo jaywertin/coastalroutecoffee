@@ -26,7 +26,7 @@ test("creates one supplied parcel profile per bag", () => {
   );
 });
 
-test("aggregates only USPS services available for every package", () => {
+test("aggregates USPS and UPS services available for every package", () => {
   const quotes = aggregatePackageRates([
     [
       {
@@ -51,6 +51,10 @@ test("aggregates only USPS services available for every package", () => {
         provider: "USPS", amount: "10.00", currency: "USD", estimated_days: 3,
         servicelevel: { name: "Priority Mail", token: "usps_priority" },
       },
+      {
+        provider: "UPS", amount: "8.50", currency: "USD", estimated_days: 4,
+        servicelevel: { name: "Ground", token: "ups_ground" },
+      },
     ],
   ]);
 
@@ -62,6 +66,15 @@ test("aggregates only USPS services available for every package", () => {
       amountCents: 1335,
       currency: "usd",
       deliveryDays: 5,
+      guaranteed: false,
+    },
+    {
+      key: "UPS:ups_ground",
+      carrier: "UPS",
+      service: "Ground",
+      amountCents: 1650,
+      currency: "usd",
+      deliveryDays: 4,
       guaranteed: false,
     },
     {

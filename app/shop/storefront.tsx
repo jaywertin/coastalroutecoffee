@@ -157,7 +157,7 @@ export function Storefront({ products }: { products: Product[] }) {
       const data = await response.json() as { quotes?: ShippingQuote[]; error?: string };
       if (signal?.aborted) return;
       if (!response.ok || !data.quotes?.length) {
-        throw new Error(data.error ?? "No USPS rates are available for this order.");
+        throw new Error(data.error ?? "No shipping rates are available for this order.");
       }
 
       setShippingQuotes(data.quotes);
@@ -166,7 +166,7 @@ export function Storefront({ products }: { products: Product[] }) {
       if (signal?.aborted) return;
       setShippingQuotes([]);
       setSelectedShippingKey("");
-      setShippingError(error instanceof Error ? error.message : "USPS rates are temporarily unavailable.");
+      setShippingError(error instanceof Error ? error.message : "Shipping rates are temporarily unavailable.");
     } finally {
       if (!signal?.aborted) setIsLoadingRates(false);
     }
@@ -282,13 +282,13 @@ export function Storefront({ products }: { products: Product[] }) {
                     ? "Free local delivery is available. Continue to Stripe test checkout."
                     : isCompleteZip
                       ? isLoadingRates
-                        ? "Finding current USPS rates for this ZIP code…"
+                        ? "Finding current shipping rates for this ZIP code…"
                         : shippingQuotes.length
-                          ? "USPS rates are ready."
+                          ? "Shipping rates are ready."
                           : shippingError
-                            ? "USPS rates could not be loaded automatically."
-                            : "USPS rates will load automatically."
-                      : "Enter a US ZIP code to check local delivery or USPS shipping."}
+                            ? "Shipping rates could not be loaded automatically."
+                            : "USPS and UPS rates will load automatically."
+                      : "Enter a US ZIP code to check local delivery or shipping."}
                 </p>
                 {isCompleteZip && !isEligibleZip && (shippingQuotes.length > 0 || Boolean(shippingError)) ? (
                   <button
@@ -297,14 +297,14 @@ export function Storefront({ products }: { products: Product[] }) {
                     className="mt-3 rounded-full border border-[#102638]/20 bg-white px-4 py-2 text-[0.67rem] font-extrabold tracking-[0.1em] uppercase disabled:opacity-50"
                     onClick={() => void loadShippingRates()}
                   >
-                    {isLoadingRates ? "Checking USPS rates…" : shippingQuotes.length ? "Refresh USPS rates" : "Try again"}
+                    {isLoadingRates ? "Checking shipping rates…" : shippingQuotes.length ? "Refresh shipping rates" : "Try again"}
                   </button>
                 ) : null}
                 {shippingError ? <p className="mt-3 text-xs leading-5 text-[#9d2c22]" role="alert">{shippingError}</p> : null}
               </div>
               {shippingQuotes.length ? (
                 <fieldset className="mt-4 space-y-2">
-                  <legend className="text-[0.67rem] font-extrabold tracking-[0.12em] uppercase">USPS shipping</legend>
+                  <legend className="text-[0.67rem] font-extrabold tracking-[0.12em] uppercase">Shipping options</legend>
                   {shippingQuotes.map((quote) => (
                     <label key={quote.key} className="flex cursor-pointer items-start justify-between gap-4 rounded-xl border border-[#102638]/12 bg-white p-3 text-sm">
                       <span className="flex gap-3">
@@ -319,7 +319,7 @@ export function Storefront({ products }: { products: Product[] }) {
                         <span>
                           <strong>{quote.carrier} {formatShippingService(quote.service)}</strong>
                           <span className="mt-1 block text-xs text-[#102638]/55">
-                            {quote.deliveryDays ? `Estimated ${quote.deliveryDays} business ${quote.deliveryDays === 1 ? "day" : "days"}` : "Delivery estimate shown by USPS"}
+                            {quote.deliveryDays ? `Estimated ${quote.deliveryDays} business ${quote.deliveryDays === 1 ? "day" : "days"}` : "Delivery estimate provided by carrier"}
                             {quote.guaranteed ? " · Guaranteed" : ""}
                           </span>
                         </span>
@@ -343,7 +343,7 @@ export function Storefront({ products }: { products: Product[] }) {
                 className="mt-5 w-full rounded-full bg-[#102638] px-5 py-4 text-xs font-extrabold tracking-[0.12em] text-white uppercase transition enabled:hover:bg-[#17364f] disabled:cursor-not-allowed disabled:bg-[#102638]/35"
                 onClick={beginCheckout}
               >
-                {isCheckingOut ? "Opening Stripe…" : isCompleteZip && !isEligibleZip && !selectedShippingQuote ? "Select a USPS rate" : "Continue to secure test checkout"}
+                {isCheckingOut ? "Opening Stripe…" : isCompleteZip && !isEligibleZip && !selectedShippingQuote ? "Select a shipping rate" : "Continue to secure test checkout"}
               </button>
             </div>
           </aside>

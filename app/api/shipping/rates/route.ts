@@ -51,6 +51,6 @@ export async function POST(request: Request) {
     console.error("Shipping rate endpoint failed", {
       name: error instanceof Error ? error.name : "UnknownError",
     });
-    return Response.json({ error: "USPS rates are temporarily unavailable. Please try again." }, { status: 500 });
+    return Response.json({ error: "Shipping rates are temporarily unavailable. Please try again." }, { status: 500 });
   }
 }

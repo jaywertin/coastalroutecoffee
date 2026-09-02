@@ -37,7 +37,7 @@ export default async function CheckoutSuccessPage({ searchParams }: { searchPara
   const deliveryDescription = isLocalDelivery
     ? "Free local delivery · 3–5 business days"
     : [
-        shippingCarrier && shippingService ? `${shippingCarrier} ${formatShippingService(shippingService)}` : "USPS shipping",
+        shippingCarrier && shippingService ? `${shippingCarrier} ${formatShippingService(shippingService)}` : "Carrier shipping",
         Number.isFinite(shippingDays) && shippingDays > 0 ? `Estimated ${shippingDays} business ${shippingDays === 1 ? "day" : "days"}` : null,
       ].filter(Boolean).join(" · ");
 

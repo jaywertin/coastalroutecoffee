@@ -20,14 +20,14 @@ type ShippoShipmentResponse = {
 };
 
 export class ShippingConfigurationError extends Error {
-  constructor(message = "USPS rates are waiting for the Shippo test API token.") {
+  constructor(message = "Shipping rates are waiting for the Shippo test API token.") {
     super(message);
     this.name = "ShippingConfigurationError";
   }
 }
 
 export class ShippingRateError extends Error {
-  constructor(message = "USPS rates are temporarily unavailable. Please try again.") {
+  constructor(message = "Shipping rates are temporarily unavailable. Please try again.") {
     super(message);
     this.name = "ShippingRateError";
   }
@@ -75,7 +75,7 @@ async function rateParcel(zip: string, parcel: ShippingParcel, token: string) {
 
   if (!data.rates?.length) {
     console.error("Shippo returned no rates", { messages: data.messages?.map(({ code, source }) => ({ code, source })) });
-    throw new ShippingRateError("No USPS services are available for this order.");
+    throw new ShippingRateError("No USPS or UPS services are available for this order.");
   }
   return data.rates;
 }
@@ -87,7 +87,7 @@ export async function getShippoQuotes(zip: string, parcels: ShippingParcel[]): P
   try {
     const rateGroups = await Promise.all(parcels.map((parcel) => rateParcel(zip, parcel, token)));
     const quotes = aggregatePackageRates(rateGroups);
-    if (!quotes.length) throw new ShippingRateError("No common USPS service is available for every package in this order.");
+    if (!quotes.length) throw new ShippingRateError("No common USPS or UPS service is available for every package in this order.");
     return quotes;
   } catch (error) {
     if (error instanceof ShippingConfigurationError || error instanceof ShippingRateError) throw error;

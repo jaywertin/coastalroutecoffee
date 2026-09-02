@@ -20,7 +20,7 @@ export default function ShippingPage() {
             <p className="mt-7 max-w-xl text-base leading-7 text-[#102638]/65">We deliver free to designated local ZIP codes with no minimum order. All other orders ship within the United States, with carrier pricing based on destination and package size.</p>
             <dl className="mt-9 grid gap-5 sm:grid-cols-2">
               <div className="border-l-2 border-[#c18d3d] pl-4"><dt className="text-xs font-bold uppercase">Local delivery</dt><dd className="mt-1 text-sm text-[#102638]/60">Free · 3–5 business days</dd></div>
-              <div className="border-l-2 border-[#c18d3d] pl-4"><dt className="text-xs font-bold uppercase">US shipping</dt><dd className="mt-1 text-sm text-[#102638]/60">Live USPS rates coming next</dd></div>
+              <div className="border-l-2 border-[#c18d3d] pl-4"><dt className="text-xs font-bold uppercase">US shipping</dt><dd className="mt-1 text-sm text-[#102638]/60">Live USPS and UPS rates at checkout</dd></div>
             </dl>
           </div>
           <LocalDeliveryChecker />

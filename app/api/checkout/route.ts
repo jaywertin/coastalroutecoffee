@@ -43,7 +43,7 @@ export async function POST(request: Request) {
 
     if (!isLocalDelivery) {
       if (typeof shippingRateKey !== "string" || !shippingRateKey) {
-        return Response.json({ error: "Select a USPS shipping option." }, { status: 400 });
+        return Response.json({ error: "Select a shipping option." }, { status: 400 });
       }
 
       const parcels = buildShippingParcels(
@@ -140,7 +140,7 @@ export async function POST(request: Request) {
         shipping_address: {
           message: isLocalDelivery
             ? `Local delivery only. Please use the eligible ZIP code ${deliveryZip} entered in the shop.`
-            : `Your USPS rate was calculated for ZIP code ${deliveryZip}. Please use an address with that ZIP code.`,
+            : `Your shipping rate was calculated for ZIP code ${deliveryZip}. Please use an address with that ZIP code.`,
         },
       },
       metadata: orderMetadata,

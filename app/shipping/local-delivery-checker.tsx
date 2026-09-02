@@ -24,7 +24,7 @@ export function LocalDeliveryChecker() {
       </form>
       <div className="mt-5 min-h-16" aria-live="polite">
         {result === "eligible" ? <p className="rounded-xl bg-[#dce8df] p-4 text-sm leading-6"><strong>Free local delivery is available.</strong><br />No minimum order. Expect delivery within 3–5 business days.</p> : null}
-        {result === "shipping" ? <p className="rounded-xl bg-[#e8dfcf] p-4 text-sm leading-6"><strong>We can ship to this ZIP code.</strong><br />USPS options and pricing will be shown before payment.</p> : null}
+        {result === "shipping" ? <p className="rounded-xl bg-[#e8dfcf] p-4 text-sm leading-6"><strong>We can ship to this ZIP code.</strong><br />USPS and UPS options will be shown before payment.</p> : null}
         {result === "invalid" ? <p className="rounded-xl bg-[#f1dcd5] p-4 text-sm">Please enter a five-digit United States ZIP code.</p> : null}
       </div>
     </div>

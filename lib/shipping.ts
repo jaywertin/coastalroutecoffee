@@ -12,6 +12,8 @@ export const shippingProfiles = {
   "2 lb": { length: 12, width: 9, height: 3, weightOz: 42 },
 } as const;
 
+const SUPPORTED_CARRIERS = new Set(["USPS", "UPS"]);
+
 export type ShippingSize = keyof typeof shippingProfiles;
 
 export type ShippingParcel = {
@@ -70,7 +72,7 @@ export function aggregatePackageRates(rateGroups: ShippoRate[][]): ShippingQuote
     const group = new Map<string, ShippoRate>();
 
     for (const rate of rates) {
-      if (rate.provider.toUpperCase() !== "USPS" || rate.currency.toUpperCase() !== "USD") continue;
+      if (!SUPPORTED_CARRIERS.has(rate.provider.toUpperCase()) || rate.currency.toUpperCase() !== "USD") continue;
       const amount = Number(rate.amount);
       if (!Number.isFinite(amount) || amount < 0) continue;
 
@@ -82,7 +84,7 @@ export function aggregatePackageRates(rateGroups: ShippoRate[][]): ShippingQuote
     return group;
   });
 
-  return [...normalizedGroups[0].entries()]
+  const quotes = [...normalizedGroups[0].entries()]
     .filter(([key]) => normalizedGroups.every((group) => group.has(key)))
     .map(([key, firstRate]) => {
       const rates = normalizedGroups.map((group) => group.get(key)!);
@@ -100,8 +102,16 @@ export function aggregatePackageRates(rateGroups: ShippoRate[][]): ShippingQuote
         guaranteed: rates.every((rate) => /guaranteed/i.test(rate.duration_terms ?? "")),
       };
     })
-    .sort((a, b) => a.amountCents - b.amountCents)
-    .slice(0, 5);
+    .sort((a, b) => a.amountCents - b.amountCents);
+
+  const carrierCounts = new Map<string, number>();
+  return quotes.filter((quote) => {
+    const carrier = quote.carrier.toUpperCase();
+    const count = carrierCounts.get(carrier) ?? 0;
+    if (count >= 3) return false;
+    carrierCounts.set(carrier, count + 1);
+    return true;
+  });
 }
 
 export function formatShippingService(service: string) {

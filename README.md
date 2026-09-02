@@ -4,7 +4,7 @@ This is the new Coastal Route Coffee website, built with [Next.js](https://nextj
 
 ## Getting Started
 
-Copy `.env.example` to `.env.local` and provide the Stripe sandbox variables. USPS carrier rates additionally use:
+Copy `.env.example` to `.env.local` and provide the Stripe sandbox variables. USPS and UPS carrier rates additionally use:
 
 - `SHIPPO_API_TOKEN` — a Shippo Test key while the storefront remains in sandbox mode
 
