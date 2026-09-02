@@ -30,30 +30,30 @@ test("aggregates USPS and UPS services available for every package", () => {
   const quotes = aggregatePackageRates([
     [
       {
-        provider: "USPS", amount: "6.25", currency: "USD", estimated_days: 4,
+        object_id: "rate-usps-ground-1", provider: "USPS", amount: "6.25", currency: "USD", estimated_days: 4,
         servicelevel: { name: "Ground Advantage", token: "usps_ground_advantage" },
       },
       {
-        provider: "USPS", amount: "9.50", currency: "USD", estimated_days: 2,
+        object_id: "rate-usps-priority-1", provider: "USPS", amount: "9.50", currency: "USD", estimated_days: 2,
         servicelevel: { name: "Priority Mail", token: "usps_priority" },
       },
       {
-        provider: "UPS", amount: "8.00", currency: "USD", estimated_days: 3,
-        servicelevel: { name: "Ground", token: "ups_ground" },
+        object_id: "rate-ups-saver-1", provider: "UPS", amount: "8.00", currency: "USD", estimated_days: 3,
+        servicelevel: { name: "Ground Saver", token: "ups_ground_saver" },
       },
     ],
     [
       {
-        provider: "USPS", amount: "7.10", currency: "USD", estimated_days: 5,
+        object_id: "rate-usps-ground-2", provider: "USPS", amount: "7.10", currency: "USD", estimated_days: 5,
         servicelevel: { name: "Ground Advantage", token: "usps_ground_advantage" },
       },
       {
-        provider: "USPS", amount: "10.00", currency: "USD", estimated_days: 3,
+        object_id: "rate-usps-priority-2", provider: "USPS", amount: "10.00", currency: "USD", estimated_days: 3,
         servicelevel: { name: "Priority Mail", token: "usps_priority" },
       },
       {
-        provider: "UPS", amount: "8.50", currency: "USD", estimated_days: 4,
-        servicelevel: { name: "Ground", token: "ups_ground" },
+        object_id: "rate-ups-saver-2", provider: "UPS", amount: "8.50", currency: "USD", estimated_days: 4,
+        servicelevel: { name: "Ground Saver", token: "ups_ground_saver" },
       },
     ],
   ]);
@@ -69,9 +69,9 @@ test("aggregates USPS and UPS services available for every package", () => {
       guaranteed: false,
     },
     {
-      key: "UPS:ups_ground",
+      key: "UPS:ups_ground_saver",
       carrier: "UPS",
-      service: "Ground",
+      service: "Ground Saver",
       amountCents: 1650,
       currency: "usd",
       deliveryDays: 4,

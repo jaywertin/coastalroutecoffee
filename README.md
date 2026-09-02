@@ -10,6 +10,15 @@ Copy `.env.example` to `.env.local` and provide the Stripe sandbox variables. US
 
 Shippo credentials are read only by server routes and must never use a `NEXT_PUBLIC_` prefix. The sandbox storefront rejects live Shippo keys.
 
+Sandbox fulfillment additionally uses:
+
+- `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` — durable duplicate-event protection for Stripe webhooks
+- `RESEND_API_KEY` — optional merchant fulfillment email delivery
+- `FULFILLMENT_EMAIL_TO` — merchant notification recipient (defaults to `coastalroutecoffee@gmail.com`)
+- `FULFILLMENT_FROM_EMAIL` — verified Resend sender (uses Resend's sandbox sender during testing)
+
+Only checkout sessions created with the current sandbox fulfillment version are processed. Stripe live events and Shippo live tokens are rejected. Carrier orders create 4×6 Shippo test labels; local-delivery orders create no carrier label. Monthly subscription renewals use the current shipping address stored on the Stripe customer.
+
 First, run the development server:
 
 ```bash

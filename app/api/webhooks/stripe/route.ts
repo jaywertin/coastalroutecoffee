@@ -1,4 +1,6 @@
 import Stripe from "stripe";
+import { fulfillCheckoutSession, fulfillSubscriptionRenewal } from "@/lib/fulfillment";
+import { FulfillmentConfigurationError } from "@/lib/fulfillment-store";
 import { getStripe } from "@/lib/stripe";
 
 export const runtime = "nodejs";
@@ -49,6 +51,25 @@ export async function POST(request: Request) {
     console.info("Stripe order event received", summary);
   } else {
     console.info("Stripe webhook event ignored", summary);
+  }
+
+  try {
+    if (event.type === "checkout.session.completed" || event.type === "checkout.session.async_payment_succeeded") {
+      await fulfillCheckoutSession(event.data.object as Stripe.Checkout.Session);
+    }
+    if (event.type === "invoice.paid") {
+      await fulfillSubscriptionRenewal(event.data.object as Stripe.Invoice);
+    }
+  } catch (error) {
+    console.error("Stripe sandbox fulfillment failed", {
+      ...summary,
+      name: error instanceof Error ? error.name : "UnknownError",
+      message: error instanceof Error ? error.message : "Unknown error",
+    });
+    return Response.json(
+      { error: error instanceof FulfillmentConfigurationError ? error.message : "Sandbox fulfillment failed." },
+      { status: 503 },
+    );
   }
 
   return Response.json({ received: true });

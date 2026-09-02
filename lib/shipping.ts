@@ -28,6 +28,7 @@ export type ShippingParcel = {
 };
 
 export type ShippoRate = {
+  object_id: string;
   provider: string;
   amount: string;
   currency: string;

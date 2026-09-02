@@ -3,6 +3,7 @@ import { hasMixedPurchaseTypes, InvalidCartError, resolveCartItems } from "@/lib
 import { getShippoQuotes, ShippingConfigurationError, ShippingRateError } from "@/lib/shippo";
 import { buildShippingParcels, isLocalDeliveryZip, type ShippingQuote } from "@/lib/shipping";
 import { getStripe } from "@/lib/stripe";
+import { FULFILLMENT_VERSION } from "@/lib/fulfillment";
 
 export const runtime = "nodejs";
 
@@ -58,9 +59,11 @@ export async function POST(request: Request) {
 
     const origin = new URL(request.url).origin;
     const orderMetadata = {
+      fulfillmentVersion: FULFILLMENT_VERSION,
       checkoutPhase: isLocalDelivery ? "local-delivery-sandbox" : "shippo-shipping-sandbox",
       deliveryZip,
       shippingType: isLocalDelivery ? "local" : "carrier",
+      shippingRateKey: shippingQuote?.key ?? "local-delivery",
       shippingCarrier: shippingQuote?.carrier ?? "Local delivery",
       shippingService: shippingQuote?.service ?? "Free local delivery",
       shippingAmountCents: String(shippingQuote?.amountCents ?? 0),
