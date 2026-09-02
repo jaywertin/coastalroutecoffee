@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { formatPrice, type Product, type ProductOption } from "@/lib/products";
 import { formatShippingService, isLocalDeliveryZip, type ShippingQuote } from "@/lib/shipping";
 
@@ -103,6 +103,7 @@ export function Storefront({ products }: { products: Product[] }) {
     setShippingQuotes([]);
     setSelectedShippingKey("");
     setShippingError("");
+    setIsLoadingRates(false);
   }
 
   function addToCart(product: Product, option: ProductOption) {
@@ -133,7 +134,7 @@ export function Storefront({ products }: { products: Product[] }) {
     clearShippingSelection();
   }
 
-  async function loadShippingRates() {
+  const loadShippingRates = useCallback(async (signal?: AbortSignal) => {
     if (!cart.length || !isCompleteZip || isEligibleZip) return;
     setShippingError("");
     setCheckoutError("");
@@ -143,6 +144,7 @@ export function Storefront({ products }: { products: Product[] }) {
       const response = await fetch("/api/shipping/rates", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal,
         body: JSON.stringify({
           zip: normalizedZip,
           items: cart.map((item) => ({
@@ -153,6 +155,7 @@ export function Storefront({ products }: { products: Product[] }) {
         }),
       });
       const data = await response.json() as { quotes?: ShippingQuote[]; error?: string };
+      if (signal?.aborted) return;
       if (!response.ok || !data.quotes?.length) {
         throw new Error(data.error ?? "No USPS rates are available for this order.");
       }
@@ -160,13 +163,28 @@ export function Storefront({ products }: { products: Product[] }) {
       setShippingQuotes(data.quotes);
       setSelectedShippingKey(data.quotes[0].key);
     } catch (error) {
+      if (signal?.aborted) return;
       setShippingQuotes([]);
       setSelectedShippingKey("");
       setShippingError(error instanceof Error ? error.message : "USPS rates are temporarily unavailable.");
     } finally {
-      setIsLoadingRates(false);
+      if (!signal?.aborted) setIsLoadingRates(false);
     }
-  }
+  }, [cart, isCompleteZip, isEligibleZip, normalizedZip]);
+
+  useEffect(() => {
+    if (!cart.length || !isCompleteZip || isEligibleZip) return;
+
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      void loadShippingRates(controller.signal);
+    }, 450);
+
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [cart.length, isCompleteZip, isEligibleZip, loadShippingRates]);
 
   async function beginCheckout() {
     if (!canCheckout) return;
@@ -263,17 +281,23 @@ export function Storefront({ products }: { products: Product[] }) {
                   {isEligibleZip
                     ? "Free local delivery is available. Continue to Stripe test checkout."
                     : isCompleteZip
-                      ? "Request current USPS commercial rates for this ZIP code."
+                      ? isLoadingRates
+                        ? "Finding current USPS rates for this ZIP code…"
+                        : shippingQuotes.length
+                          ? "USPS rates are ready."
+                          : shippingError
+                            ? "USPS rates could not be loaded automatically."
+                            : "USPS rates will load automatically."
                       : "Enter a US ZIP code to check local delivery or USPS shipping."}
                 </p>
-                {isCompleteZip && !isEligibleZip ? (
+                {isCompleteZip && !isEligibleZip && (shippingQuotes.length > 0 || Boolean(shippingError)) ? (
                   <button
                     type="button"
                     disabled={!cart.length || isLoadingRates}
                     className="mt-3 rounded-full border border-[#102638]/20 bg-white px-4 py-2 text-[0.67rem] font-extrabold tracking-[0.1em] uppercase disabled:opacity-50"
-                    onClick={loadShippingRates}
+                    onClick={() => void loadShippingRates()}
                   >
-                    {isLoadingRates ? "Checking USPS rates…" : shippingQuotes.length ? "Refresh USPS rates" : "Get USPS rates"}
+                    {isLoadingRates ? "Checking USPS rates…" : shippingQuotes.length ? "Refresh USPS rates" : "Try again"}
                   </button>
                 ) : null}
                 {shippingError ? <p className="mt-3 text-xs leading-5 text-[#9d2c22]" role="alert">{shippingError}</p> : null}
