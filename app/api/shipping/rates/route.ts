@@ -1,5 +1,5 @@
 import { hasMixedPurchaseTypes, InvalidCartError, resolveCartItems } from "@/lib/cart";
-import { getShippoQuotes, ShippingConfigurationError, ShippingRateError } from "@/lib/shippo";
+import { getShippoQuoteResult, ShippingConfigurationError, ShippingRateError } from "@/lib/shippo";
 import { buildShippingParcels, isLocalDeliveryZip } from "@/lib/shipping";
 
 export const runtime = "nodejs";
@@ -32,8 +32,12 @@ export async function POST(request: Request) {
     const parcels = buildShippingParcels(
       resolvedItems.map(({ option, quantity }) => ({ size: option.size, quantity })),
     );
-    const quotes = await getShippoQuotes(deliveryZip, parcels);
-    return Response.json({ localDelivery: false, quotes });
+    const { quotes, diagnostics } = await getShippoQuoteResult(deliveryZip, parcels);
+    return Response.json({
+      localDelivery: false,
+      quotes,
+      ...(new URL(request.url).searchParams.get("diagnostics") === "1" ? { diagnostics } : {}),
+    });
   } catch (error) {
     if (error instanceof SyntaxError) {
       return Response.json({ error: "Invalid shipping request." }, { status: 400 });
