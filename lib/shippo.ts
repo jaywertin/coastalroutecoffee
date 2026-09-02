@@ -19,11 +19,6 @@ type ShippoShipmentResponse = {
   detail?: string;
 };
 
-export type ShippoDiagnostic = {
-  providers: string[];
-  messages: Array<{ text?: string; source?: string; code?: string }>;
-};
-
 export class ShippingConfigurationError extends Error {
   constructor(message = "Shipping rates are waiting for the Shippo test API token.") {
     super(message);
@@ -82,28 +77,18 @@ async function rateParcel(zip: string, parcel: ShippingParcel, token: string) {
     console.error("Shippo returned no rates", { messages: data.messages?.map(({ code, source }) => ({ code, source })) });
     throw new ShippingRateError("No USPS or UPS services are available for this order.");
   }
-  return {
-    rates: data.rates,
-    diagnostic: {
-      providers: [...new Set(data.rates.map((rate) => rate.provider))],
-      messages: (data.messages ?? []).map(({ code, source, text }) => ({ code, source, text })),
-    } satisfies ShippoDiagnostic,
-  };
+  return data.rates;
 }
 
-export async function getShippoQuoteResult(
-  zip: string,
-  parcels: ShippingParcel[],
-): Promise<{ quotes: ShippingQuote[]; diagnostics: ShippoDiagnostic[] }> {
+export async function getShippoQuotes(zip: string, parcels: ShippingParcel[]): Promise<ShippingQuote[]> {
   const token = getShippoToken();
   if (!parcels.length) throw new ShippingRateError("Your cart does not contain a shippable item.");
 
   try {
-    const results = await Promise.all(parcels.map((parcel) => rateParcel(zip, parcel, token)));
-    const rateGroups = results.map((result) => result.rates);
+    const rateGroups = await Promise.all(parcels.map((parcel) => rateParcel(zip, parcel, token)));
     const quotes = aggregatePackageRates(rateGroups);
     if (!quotes.length) throw new ShippingRateError("No common USPS or UPS service is available for every package in this order.");
-    return { quotes, diagnostics: results.map((result) => result.diagnostic) };
+    return quotes;
   } catch (error) {
     if (error instanceof ShippingConfigurationError || error instanceof ShippingRateError) throw error;
     console.error("Shippo rate lookup failed", {
@@ -111,8 +96,4 @@ export async function getShippoQuoteResult(
     });
     throw new ShippingRateError();
   }
-}
-
-export async function getShippoQuotes(zip: string, parcels: ShippingParcel[]): Promise<ShippingQuote[]> {
-  return (await getShippoQuoteResult(zip, parcels)).quotes;
 }
