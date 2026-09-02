@@ -6,10 +6,9 @@ This is the new Coastal Route Coffee website, built with [Next.js](https://nextj
 
 Copy `.env.example` to `.env.local` and provide the Stripe sandbox variables. USPS carrier rates additionally use:
 
-- `EASYPOST_API_KEY` — an EasyPost Test key while the storefront remains in sandbox mode
-- `EASYPOST_FROM_ADDRESS_ID` — optional; defaults to the verified Coastal Route Coffee sender address
+- `SHIPPO_API_TOKEN` — a Shippo Test key while the storefront remains in sandbox mode
 
-EasyPost credentials are read only by server routes and must never use a `NEXT_PUBLIC_` prefix.
+Shippo credentials are read only by server routes and must never use a `NEXT_PUBLIC_` prefix. The sandbox storefront rejects live Shippo keys.
 
 First, run the development server:
 

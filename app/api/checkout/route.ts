@@ -1,6 +1,6 @@
 import Stripe from "stripe";
 import { hasMixedPurchaseTypes, InvalidCartError, resolveCartItems } from "@/lib/cart";
-import { getEasyPostQuotes, ShippingConfigurationError, ShippingRateError } from "@/lib/easypost";
+import { getShippoQuotes, ShippingConfigurationError, ShippingRateError } from "@/lib/shippo";
 import { buildShippingParcels, isLocalDeliveryZip, type ShippingQuote } from "@/lib/shipping";
 import { getStripe } from "@/lib/stripe";
 
@@ -49,7 +49,7 @@ export async function POST(request: Request) {
       const parcels = buildShippingParcels(
         resolvedItems.map(({ option, quantity }) => ({ size: option.size, quantity })),
       );
-      const quotes = await getEasyPostQuotes(deliveryZip, parcels);
+      const quotes = await getShippoQuotes(deliveryZip, parcels);
       shippingQuote = quotes.find((quote) => quote.key === shippingRateKey) ?? null;
       if (!shippingQuote) {
         return Response.json({ error: "That shipping quote expired. Please request current rates." }, { status: 409 });
@@ -58,7 +58,7 @@ export async function POST(request: Request) {
 
     const origin = new URL(request.url).origin;
     const orderMetadata = {
-      checkoutPhase: isLocalDelivery ? "local-delivery-sandbox" : "easypost-shipping-sandbox",
+      checkoutPhase: isLocalDelivery ? "local-delivery-sandbox" : "shippo-shipping-sandbox",
       deliveryZip,
       shippingType: isLocalDelivery ? "local" : "carrier",
       shippingCarrier: shippingQuote?.carrier ?? "Local delivery",

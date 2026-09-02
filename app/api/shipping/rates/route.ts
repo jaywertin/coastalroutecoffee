@@ -1,5 +1,5 @@
 import { hasMixedPurchaseTypes, InvalidCartError, resolveCartItems } from "@/lib/cart";
-import { getEasyPostQuotes, ShippingConfigurationError, ShippingRateError } from "@/lib/easypost";
+import { getShippoQuotes, ShippingConfigurationError, ShippingRateError } from "@/lib/shippo";
 import { buildShippingParcels, isLocalDeliveryZip } from "@/lib/shipping";
 
 export const runtime = "nodejs";
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     const parcels = buildShippingParcels(
       resolvedItems.map(({ option, quantity }) => ({ size: option.size, quantity })),
     );
-    const quotes = await getEasyPostQuotes(deliveryZip, parcels);
+    const quotes = await getShippoQuotes(deliveryZip, parcels);
     return Response.json({ localDelivery: false, quotes });
   } catch (error) {
     if (error instanceof SyntaxError) {

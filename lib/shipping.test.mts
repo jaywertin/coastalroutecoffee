@@ -29,30 +29,45 @@ test("creates one supplied parcel profile per bag", () => {
 test("aggregates only USPS services available for every package", () => {
   const quotes = aggregatePackageRates([
     [
-      { carrier: "USPS", service: "GroundAdvantage", rate: "6.25", currency: "USD", delivery_days: 4 },
-      { carrier: "USPS", service: "Priority", rate: "9.50", currency: "USD", delivery_days: 2 },
-      { carrier: "UPS", service: "Ground", rate: "8.00", currency: "USD", delivery_days: 3 },
+      {
+        provider: "USPS", amount: "6.25", currency: "USD", estimated_days: 4,
+        servicelevel: { name: "Ground Advantage", token: "usps_ground_advantage" },
+      },
+      {
+        provider: "USPS", amount: "9.50", currency: "USD", estimated_days: 2,
+        servicelevel: { name: "Priority Mail", token: "usps_priority" },
+      },
+      {
+        provider: "UPS", amount: "8.00", currency: "USD", estimated_days: 3,
+        servicelevel: { name: "Ground", token: "ups_ground" },
+      },
     ],
     [
-      { carrier: "USPS", service: "GroundAdvantage", rate: "7.10", currency: "USD", delivery_days: 5 },
-      { carrier: "USPS", service: "Priority", rate: "10.00", currency: "USD", delivery_days: 3 },
+      {
+        provider: "USPS", amount: "7.10", currency: "USD", estimated_days: 5,
+        servicelevel: { name: "Ground Advantage", token: "usps_ground_advantage" },
+      },
+      {
+        provider: "USPS", amount: "10.00", currency: "USD", estimated_days: 3,
+        servicelevel: { name: "Priority Mail", token: "usps_priority" },
+      },
     ],
   ]);
 
   assert.deepEqual(quotes, [
     {
-      key: "USPS:GroundAdvantage",
+      key: "USPS:usps_ground_advantage",
       carrier: "USPS",
-      service: "GroundAdvantage",
+      service: "Ground Advantage",
       amountCents: 1335,
       currency: "usd",
       deliveryDays: 5,
       guaranteed: false,
     },
     {
-      key: "USPS:Priority",
+      key: "USPS:usps_priority",
       carrier: "USPS",
-      service: "Priority",
+      service: "Priority Mail",
       amountCents: 1950,
       currency: "usd",
       deliveryDays: 3,
@@ -61,7 +76,7 @@ test("aggregates only USPS services available for every package", () => {
   ]);
 });
 
-test("formats EasyPost service identifiers for customers", () => {
+test("formats shipping service identifiers for customers", () => {
   assert.equal(formatShippingService("GroundAdvantage"), "Ground Advantage");
   assert.equal(formatShippingService("priority_mail_express"), "Priority Mail Express");
 });

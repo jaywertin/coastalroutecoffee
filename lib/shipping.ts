@@ -21,13 +21,16 @@ export type ShippingParcel = {
   weight: number;
 };
 
-export type EasyPostRate = {
-  carrier: string;
-  service: string;
-  rate: string;
+export type ShippoRate = {
+  provider: string;
+  amount: string;
   currency: string;
-  delivery_days?: number | null;
-  delivery_date_guaranteed?: boolean;
+  estimated_days?: number | null;
+  duration_terms?: string;
+  servicelevel: {
+    name: string;
+    token: string;
+  };
 };
 
 export type ShippingQuote = {
@@ -60,20 +63,20 @@ export function shippingQuoteKey(carrier: string, service: string) {
   return `${carrier}:${service}`;
 }
 
-export function aggregatePackageRates(rateGroups: EasyPostRate[][]): ShippingQuote[] {
+export function aggregatePackageRates(rateGroups: ShippoRate[][]): ShippingQuote[] {
   if (!rateGroups.length) return [];
 
   const normalizedGroups = rateGroups.map((rates) => {
-    const group = new Map<string, EasyPostRate>();
+    const group = new Map<string, ShippoRate>();
 
     for (const rate of rates) {
-      if (rate.carrier.toUpperCase() !== "USPS" || rate.currency.toUpperCase() !== "USD") continue;
-      const amount = Number(rate.rate);
+      if (rate.provider.toUpperCase() !== "USPS" || rate.currency.toUpperCase() !== "USD") continue;
+      const amount = Number(rate.amount);
       if (!Number.isFinite(amount) || amount < 0) continue;
 
-      const key = shippingQuoteKey(rate.carrier, rate.service);
+      const key = shippingQuoteKey(rate.provider, rate.servicelevel.token);
       const current = group.get(key);
-      if (!current || amount < Number(current.rate)) group.set(key, rate);
+      if (!current || amount < Number(current.amount)) group.set(key, rate);
     }
 
     return group;
@@ -83,18 +86,18 @@ export function aggregatePackageRates(rateGroups: EasyPostRate[][]): ShippingQuo
     .filter(([key]) => normalizedGroups.every((group) => group.has(key)))
     .map(([key, firstRate]) => {
       const rates = normalizedGroups.map((group) => group.get(key)!);
-      const deliveryDays = rates.every((rate) => typeof rate.delivery_days === "number")
-        ? Math.max(...rates.map((rate) => rate.delivery_days as number))
+      const deliveryDays = rates.every((rate) => typeof rate.estimated_days === "number")
+        ? Math.max(...rates.map((rate) => rate.estimated_days as number))
         : null;
 
       return {
         key,
-        carrier: firstRate.carrier,
-        service: firstRate.service,
-        amountCents: rates.reduce((total, rate) => total + Math.round(Number(rate.rate) * 100), 0),
+        carrier: firstRate.provider,
+        service: firstRate.servicelevel.name,
+        amountCents: rates.reduce((total, rate) => total + Math.round(Number(rate.amount) * 100), 0),
         currency: "usd" as const,
         deliveryDays,
-        guaranteed: rates.every((rate) => rate.delivery_date_guaranteed === true),
+        guaranteed: rates.every((rate) => /guaranteed/i.test(rate.duration_terms ?? "")),
       };
     })
     .sort((a, b) => a.amountCents - b.amountCents)
