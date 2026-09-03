@@ -28,8 +28,8 @@ export const products: Product[] = [
     notes: "Milk chocolate · Toasted nuts · Hint of fruit",
     description:
       "A balanced, easygoing blend roasted for a smooth everyday cup with a distinctly California point of view.",
-    image: "/images/california-blend.png",
-    imageAlt: "California Blend whole-bean coffee bag",
+    image: "/images/california-blend-label.jpg",
+    imageAlt: "California Blend coffee label",
     accent: "#0b7a3b",
     options: [
       { id: "california-12-one", size: "12 oz", purchaseType: "one-time", price: 18, lookupKey: "california_blend_12oz_one_time" },
@@ -45,8 +45,8 @@ export const products: Product[] = [
     notes: "Dark chocolate · Baking spices · Rich finish",
     description:
       "Deep, comforting, and full-bodied, with a bold roast profile that stays smooth from the first sip to the last.",
-    image: "/images/fogged-in.png",
-    imageAlt: "Fogged In whole-bean coffee bag",
+    image: "/images/fogged-in-label.png",
+    imageAlt: "Fogged In coffee label",
     accent: "#747675",
     options: [
       { id: "fogged-12-one", size: "12 oz", purchaseType: "one-time", price: 18, lookupKey: "fogged_in_12oz_one_time" },

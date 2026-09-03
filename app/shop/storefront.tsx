@@ -30,7 +30,7 @@ function ProductCard({ product, onAdd }: { product: Product; onAdd: (product: Pr
           src={product.image}
           alt={product.imageAlt}
           fill
-          className={product.id === "coffee-of-the-month" ? "object-contain p-8" : "object-contain p-10 transition duration-500 hover:scale-[1.035]"}
+          className="object-contain p-8 transition-transform duration-500 hover:scale-[1.025]"
           sizes="(max-width: 768px) 100vw, 33vw"
         />
         <span className="absolute top-5 left-5 rounded-full bg-[#fffdf8]/92 px-3 py-2 text-[0.62rem] font-extrabold tracking-[0.12em] uppercase">{product.roast}</span>

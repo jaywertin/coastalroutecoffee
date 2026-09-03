@@ -49,7 +49,7 @@ export default function Home() {
                 <Link href="/shop" key={product.id} className="product-card overflow-hidden rounded-[1.6rem] bg-[#fffdf8]">
                   <div className="relative aspect-[4/4.4] overflow-hidden bg-[#e8dfcf]">
                     <div className="absolute inset-x-0 top-0 z-10 h-2" style={{ backgroundColor: product.accent }} />
-                    <Image src={product.image} alt={product.imageAlt} fill className={product.id === "coffee-of-the-month" ? "object-contain p-8" : "object-contain p-10 transition duration-500 hover:scale-[1.035]"} sizes="(max-width: 768px) 100vw, 33vw" />
+                    <Image src={product.image} alt={product.imageAlt} fill className="object-contain p-8 transition-transform duration-500 hover:scale-[1.025]" sizes="(max-width: 768px) 100vw, 33vw" />
                     <span className="absolute top-5 left-5 rounded-full bg-[#fffdf8]/92 px-3 py-2 text-[0.6rem] font-bold tracking-[0.14em] uppercase">{product.roast}</span>
                   </div>
                   <div className="p-6 sm:p-7">
