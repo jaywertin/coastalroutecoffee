@@ -18,7 +18,7 @@ export default function ShopPage() {
           <p className="eyebrow text-[#9b6a2d]">Roasted for the road ahead</p>
           <div className="mt-5 grid gap-6 md:grid-cols-[1fr_0.55fr] md:items-end">
             <h1 className="font-display max-w-4xl text-6xl leading-[0.9] tracking-[-0.045em] sm:text-7xl">Find your everyday coffee.</h1>
-            <p className="max-w-md text-sm leading-6 text-[#102638]/65">Three thoughtful routes. Always whole bean. Order once or make California Blend and Fogged In part of your monthly ritual.</p>
+            <p className="max-w-md text-sm leading-6 text-[#102638]/65">Thoughtfully roasted coffees. Always whole bean. Order once or make a favorite part of your monthly ritual.</p>
           </div>
         </div>
       </section>
