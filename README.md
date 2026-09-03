@@ -6,11 +6,14 @@ This is the new Coastal Route Coffee website, built with [Next.js](https://nextj
 
 Copy `.env.example` to `.env.local` and provide the Stripe sandbox variables. USPS and UPS carrier rates additionally use:
 
-- `COMMERCE_MODE` — `sandbox` by default; use `live` only after matching live Stripe, Shippo, webhook, and email settings are ready
+- `COMMERCE_MODE` — `sandbox` by default; use `live` only after the dedicated live credentials below are ready
 
 - `SHIPPO_API_TOKEN` — a Shippo Test key while the storefront remains in sandbox mode
+- `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` — Stripe sandbox credentials
+- `SHIPPO_LIVE_API_TOKEN` — Shippo Live key, used only when `COMMERCE_MODE=live`
+- `STRIPE_LIVE_SECRET_KEY` and `STRIPE_LIVE_WEBHOOK_SECRET` — Stripe live credentials, used only when `COMMERCE_MODE=live`
 
-Shippo credentials are read only by server routes and must never use a `NEXT_PUBLIC_` prefix. The storefront rejects any Shippo or Stripe credential that does not match `COMMERCE_MODE`.
+All secret credentials are read only by server routes and must never use a `NEXT_PUBLIC_` prefix. Sandbox and live credentials remain separate, and the storefront rejects any Shippo or Stripe credential that does not match `COMMERCE_MODE`.
 
 Sandbox fulfillment additionally uses:
 

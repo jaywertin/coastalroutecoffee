@@ -1,5 +1,5 @@
 import Stripe from "stripe";
-import { getCommerceMode } from "@/lib/commerce";
+import { getCommerceMode, getModeCredential } from "@/lib/commerce";
 import { fulfillCheckoutSession, fulfillSubscriptionRenewal } from "@/lib/fulfillment";
 import { FulfillmentConfigurationError } from "@/lib/fulfillment-store";
 import { getStripe } from "@/lib/stripe";
@@ -18,10 +18,13 @@ const handledEvents = new Set<Stripe.Event.Type>([
 export async function POST(request: Request) {
   const mode = getCommerceMode();
   const signature = request.headers.get("stripe-signature");
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  const { name: webhookSecretName, value: webhookSecret } = getModeCredential(
+    "STRIPE_WEBHOOK_SECRET",
+    "STRIPE_LIVE_WEBHOOK_SECRET",
+  );
 
   if (!webhookSecret) {
-    console.error("Stripe webhook is missing STRIPE_WEBHOOK_SECRET");
+    console.error(`Stripe webhook is missing ${webhookSecretName}`);
     return Response.json({ error: "Webhook is not configured." }, { status: 503 });
   }
 

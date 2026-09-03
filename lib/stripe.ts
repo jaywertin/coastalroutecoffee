@@ -1,14 +1,16 @@
 import Stripe from "stripe";
-import { getCommerceMode } from "@/lib/commerce";
+import { getModeCredential } from "@/lib/commerce";
 
 let stripe: Stripe | undefined;
 
 export function getStripe() {
-  const secretKey = process.env.STRIPE_SECRET_KEY;
-  const mode = getCommerceMode();
+  const { mode, name, value: secretKey } = getModeCredential(
+    "STRIPE_SECRET_KEY",
+    "STRIPE_LIVE_SECRET_KEY",
+  );
 
   if (!secretKey) {
-    throw new Error(`Stripe ${mode} mode is not configured yet.`);
+    throw new Error(`Stripe ${mode} mode is missing ${name}.`);
   }
 
   const expectedPrefix = mode === "live" ? "sk_live_" : "sk_test_";

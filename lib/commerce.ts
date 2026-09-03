@@ -10,3 +10,13 @@ export function getCommerceMode(): CommerceMode {
 export function isLiveCommerce() {
   return getCommerceMode() === "live";
 }
+
+export function getModeCredential(sandboxName: string, liveName: string) {
+  const mode = getCommerceMode();
+  const name = mode === "live" ? liveName : sandboxName;
+  return {
+    mode,
+    name,
+    value: process.env[name]?.trim(),
+  };
+}

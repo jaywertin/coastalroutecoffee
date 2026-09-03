@@ -1,5 +1,5 @@
 import { aggregatePackageRates, type ShippingParcel, type ShippingQuote, type ShippoRate } from "@/lib/shipping";
-import { getCommerceMode } from "@/lib/commerce";
+import { getModeCredential } from "@/lib/commerce";
 
 const SHIPPO_API_URL = "https://api.goshippo.com/shipments/";
 
@@ -55,9 +55,11 @@ export class ShippingRateError extends Error {
 }
 
 function getShippoToken() {
-  const token = process.env.SHIPPO_API_TOKEN?.trim();
-  const mode = getCommerceMode();
-  if (!token) throw new ShippingConfigurationError();
+  const { mode, name, value: token } = getModeCredential(
+    "SHIPPO_API_TOKEN",
+    "SHIPPO_LIVE_API_TOKEN",
+  );
+  if (!token) throw new ShippingConfigurationError(`Shipping ${mode} mode is missing ${name}.`);
   const expectedPrefix = mode === "live" ? "shippo_live_" : "shippo_test_";
   if (!token.startsWith(expectedPrefix)) {
     throw new ShippingConfigurationError(`Shippo credentials do not match COMMERCE_MODE=${mode}.`);
