@@ -1,8 +1,10 @@
 import Stripe from "stripe";
 import { getCommerceMode, getModeCredential } from "@/lib/commerce";
-import { fulfillCheckoutSession, fulfillSubscriptionRenewal } from "@/lib/fulfillment";
+import { FULFILLMENT_VERSION, fulfillCheckoutSession, fulfillSubscriptionRenewal } from "@/lib/fulfillment";
 import { FulfillmentConfigurationError } from "@/lib/fulfillment-store";
 import { getStripe } from "@/lib/stripe";
+import { notifyScheduledSubscriptionCancellation } from "@/lib/subscription-cancellation";
+import { isNewScheduledCancellation } from "@/lib/subscription-cancellation-utils";
 
 export const runtime = "nodejs";
 
@@ -64,6 +66,17 @@ export async function POST(request: Request) {
     }
     if (event.type === "invoice.paid") {
       await fulfillSubscriptionRenewal(event.data.object as Stripe.Invoice);
+    }
+    if (event.type === "customer.subscription.updated") {
+      const subscription = event.data.object as Stripe.Subscription;
+      const previousAttributes = event.data.previous_attributes as { cancel_at_period_end?: boolean } | undefined;
+      if (isNewScheduledCancellation(subscription, previousAttributes)) {
+        await notifyScheduledSubscriptionCancellation({
+          eventId: event.id,
+          subscription,
+          fulfillmentVersion: FULFILLMENT_VERSION,
+        });
+      }
     }
   } catch (error) {
     console.error(`Stripe ${mode} fulfillment failed`, {

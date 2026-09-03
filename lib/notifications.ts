@@ -131,3 +131,36 @@ export async function sendOrderEmails({
 
   await Promise.all(deliveries);
 }
+
+export async function sendSubscriptionCancellationEmail({
+  eventId,
+  customerEmail,
+  cancellationDate,
+}: {
+  eventId: string;
+  customerEmail: string;
+  cancellationDate: string;
+}) {
+  const apiKey = process.env.RESEND_API_KEY;
+  const mode = getCommerceMode();
+  if (!apiKey) throw new FulfillmentConfigurationError("Subscription email is not configured.");
+  const from = process.env.FULFILLMENT_FROM_EMAIL ?? (mode === "live"
+    ? "Coastal Route Coffee <orders@coastalroutecoffee.com>"
+    : "Coastal Route Coffee <onboarding@resend.dev>");
+  const modePrefix = mode === "sandbox" ? "[TEST] " : "";
+
+  await sendEmail({
+    apiKey,
+    from,
+    to: customerEmail,
+    subject: `${modePrefix}Your Coastal Route Coffee subscription cancellation is confirmed`,
+    idempotencyKey: `crc-${mode}-subscription-cancellation-${eventId}`,
+    html: `
+      <h1>Your subscription cancellation is confirmed.</h1>
+      <p>Your monthly coffee subscription is scheduled to end on <strong>${escapeHtml(cancellationDate)}</strong>.</p>
+      <p>Your subscription remains active until then, and you will not be charged again.</p>
+      <p>Changed your mind or need help? Reply to this email or contact ${REPLY_TO_EMAIL}.</p>
+      ${mode === "sandbox" ? "<p>This was a sandbox subscription. No real payment was processed.</p>" : ""}
+    `,
+  });
+}
