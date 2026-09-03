@@ -3,7 +3,10 @@ import { getCommerceMode, getModeCredential } from "@/lib/commerce";
 import { FULFILLMENT_VERSION, fulfillCheckoutSession, fulfillSubscriptionRenewal } from "@/lib/fulfillment";
 import { FulfillmentConfigurationError } from "@/lib/fulfillment-store";
 import { getStripe } from "@/lib/stripe";
-import { notifyScheduledSubscriptionCancellation } from "@/lib/subscription-cancellation";
+import {
+  notifyEndedSubscription,
+  notifyScheduledSubscriptionCancellation,
+} from "@/lib/subscription-cancellation";
 import { isNewScheduledCancellation } from "@/lib/subscription-cancellation-utils";
 
 export const runtime = "nodejs";
@@ -77,6 +80,13 @@ export async function POST(request: Request) {
           fulfillmentVersion: FULFILLMENT_VERSION,
         });
       }
+    }
+    if (event.type === "customer.subscription.deleted") {
+      await notifyEndedSubscription({
+        eventId: event.id,
+        subscription: event.data.object as Stripe.Subscription,
+        fulfillmentVersion: FULFILLMENT_VERSION,
+      });
     }
   } catch (error) {
     console.error(`Stripe ${mode} fulfillment failed`, {

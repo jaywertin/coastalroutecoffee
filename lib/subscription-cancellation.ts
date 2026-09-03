@@ -5,7 +5,10 @@ import {
   completeFulfillment,
   releaseFulfillmentLock,
 } from "@/lib/fulfillment-store";
-import { sendSubscriptionCancellationEmail } from "@/lib/notifications";
+import {
+  sendSubscriptionCancellationEmail,
+  sendSubscriptionEndedEmail,
+} from "@/lib/notifications";
 import { getStripe } from "@/lib/stripe";
 import { getScheduledCancellationDate } from "@/lib/subscription-cancellation-utils";
 
@@ -45,6 +48,47 @@ export async function notifyScheduledSubscriptionCancellation({
     await sendSubscriptionCancellationEmail({ eventId, customerEmail: customer.email, cancellationDate });
     await completeFulfillment(notificationId, { status: "completed", cancellationDate });
     console.info("Subscription cancellation email sent", { eventId, subscriptionId: subscription.id });
+  } catch (error) {
+    await releaseFulfillmentLock(notificationId).catch(() => undefined);
+    throw error;
+  }
+}
+
+export async function notifyEndedSubscription({
+  eventId,
+  subscription,
+  fulfillmentVersion,
+}: {
+  eventId: string;
+  subscription: Stripe.Subscription;
+  fulfillmentVersion: string;
+}) {
+  if (subscription.livemode !== isLiveCommerce()) return;
+  if (subscription.metadata.fulfillmentVersion !== fulfillmentVersion) return;
+
+  const notificationId = `subscription-ended:${eventId}`;
+  const acquired = await acquireFulfillmentLock(notificationId);
+  if (!acquired) {
+    console.info("Ended subscription email already handled", { eventId, subscriptionId: subscription.id });
+    return;
+  }
+
+  try {
+    const customer = typeof subscription.customer === "string"
+      ? await getStripe().customers.retrieve(subscription.customer)
+      : subscription.customer;
+    if (customer.deleted || !customer.email) {
+      console.warn("Ended subscription email skipped because the customer has no email", {
+        eventId,
+        subscriptionId: subscription.id,
+      });
+      await completeFulfillment(notificationId, { status: "skipped", reason: "missing-customer-email" });
+      return;
+    }
+
+    await sendSubscriptionEndedEmail({ eventId, customerEmail: customer.email });
+    await completeFulfillment(notificationId, { status: "completed" });
+    console.info("Ended subscription email sent", { eventId, subscriptionId: subscription.id });
   } catch (error) {
     await releaseFulfillmentLock(notificationId).catch(() => undefined);
     throw error;
