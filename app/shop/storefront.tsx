@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { formatPrice, type Product, type ProductOption } from "@/lib/products";
 import { formatShippingService, isLocalDeliveryZip, type ShippingQuote } from "@/lib/shipping";
+import type { CommerceMode } from "@/lib/commerce";
 
 type CartItem = {
   key: string;
@@ -71,7 +72,8 @@ function ProductCard({ product, onAdd }: { product: Product; onAdd: (product: Pr
   );
 }
 
-export function Storefront({ products }: { products: Product[] }) {
+export function Storefront({ products, commerceMode }: { products: Product[]; commerceMode: CommerceMode }) {
+  const isSandbox = commerceMode === "sandbox";
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setCartOpen] = useState(false);
   const [zip, setZip] = useState("");
@@ -279,7 +281,7 @@ export function Storefront({ products }: { products: Product[] }) {
                 />
                 <p className={`mt-2 text-xs leading-5 ${isCompleteZip && !isEligibleZip ? "text-[#9d2c22]" : "text-[#102638]/58"}`} aria-live="polite">
                   {isEligibleZip
-                    ? "Free local delivery is available. Continue to Stripe test checkout."
+                    ? `Free local delivery is available. Continue to secure${isSandbox ? " test" : ""} checkout.`
                     : isCompleteZip
                       ? isLoadingRates
                         ? "Finding current shipping rates for this ZIP code…"
@@ -335,7 +337,9 @@ export function Storefront({ products }: { products: Product[] }) {
                 <div className="flex justify-between"><span>Delivery</span><strong>{isEligibleZip ? "Free" : selectedShippingQuote ? formatPrice(shippingAmount) : "—"}</strong></div>
                 <div className="flex justify-between text-base"><span>Total</span><strong>{formatPrice(checkoutTotal)}{isSubscriptionCart ? "/mo" : ""}</strong></div>
               </div>
-              <p className="mt-3 text-xs leading-5 text-[#102638]/55">Stripe sandbox only · no real payment will be processed. Use the same ZIP address in Stripe.</p>
+              <p className="mt-3 text-xs leading-5 text-[#102638]/55">
+                {isSandbox ? "Stripe sandbox only · no real payment will be processed. " : "Secure payment is processed by Stripe. "}Use the same ZIP address in Stripe.
+              </p>
               {checkoutError ? <p className="mt-3 text-xs leading-5 text-[#9d2c22]" role="alert">{checkoutError}</p> : null}
               <button
                 type="button"
@@ -343,7 +347,7 @@ export function Storefront({ products }: { products: Product[] }) {
                 className="mt-5 w-full rounded-full bg-[#102638] px-5 py-4 text-xs font-extrabold tracking-[0.12em] text-white uppercase transition enabled:hover:bg-[#17364f] disabled:cursor-not-allowed disabled:bg-[#102638]/35"
                 onClick={beginCheckout}
               >
-                {isCheckingOut ? "Opening Stripe…" : isCompleteZip && !isEligibleZip && !selectedShippingQuote ? "Select a shipping rate" : "Continue to secure test checkout"}
+                {isCheckingOut ? "Opening Stripe…" : isCompleteZip && !isEligibleZip && !selectedShippingQuote ? "Select a shipping rate" : `Continue to secure${isSandbox ? " test" : ""} checkout`}
               </button>
             </div>
           </aside>

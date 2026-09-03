@@ -1,5 +1,6 @@
 import Stripe from "stripe";
 import { hasMixedPurchaseTypes, InvalidCartError, resolveCartItems } from "@/lib/cart";
+import { getCommerceMode } from "@/lib/commerce";
 import { getShippoQuotes, ShippingConfigurationError, ShippingRateError } from "@/lib/shippo";
 import { buildShippingParcels, isLocalDeliveryZip, type ShippingQuote } from "@/lib/shipping";
 import { getStripe } from "@/lib/stripe";
@@ -17,6 +18,7 @@ function stripeDeliveryEstimate(quote: ShippingQuote) {
 
 export async function POST(request: Request) {
   try {
+    const commerceMode = getCommerceMode();
     const body: unknown = await request.json();
     if (!body || typeof body !== "object") {
       return Response.json({ error: "Invalid checkout request." }, { status: 400 });
@@ -60,7 +62,7 @@ export async function POST(request: Request) {
     const origin = new URL(request.url).origin;
     const orderMetadata = {
       fulfillmentVersion: FULFILLMENT_VERSION,
-      checkoutPhase: isLocalDelivery ? "local-delivery-sandbox" : "shippo-shipping-sandbox",
+      checkoutPhase: isLocalDelivery ? `local-delivery-${commerceMode}` : `shippo-shipping-${commerceMode}`,
       deliveryZip,
       shippingType: isLocalDelivery ? "local" : "carrier",
       shippingRateKey: shippingQuote?.key ?? "local-delivery",
@@ -188,10 +190,9 @@ export async function POST(request: Request) {
       });
     }
 
-    const message = error instanceof Error && [
-      "Stripe sandbox is not configured yet.",
-      "Stripe checkout is locked to sandbox mode.",
-    ].includes(error.message)
+    const message = error instanceof Error && (
+      error.message.startsWith("Stripe ") || error.message.startsWith("COMMERCE_MODE ")
+    )
       ? error.message
       : "We could not start checkout. Please try again.";
     return Response.json({ error: message }, { status: 500 });

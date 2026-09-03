@@ -1,16 +1,17 @@
 import Stripe from "stripe";
 import { resolveCartItems } from "@/lib/cart";
+import { getCommerceMode, isLiveCommerce } from "@/lib/commerce";
 import {
   acquireFulfillmentLock,
   completeFulfillment,
   releaseFulfillmentLock,
 } from "@/lib/fulfillment-store";
-import { sendFulfillmentEmail } from "@/lib/notifications";
+import { sendOrderEmails } from "@/lib/notifications";
 import { buildShippingParcels, isLocalDeliveryZip } from "@/lib/shipping";
-import { createShippoTestLabels, type ShippoRecipient } from "@/lib/shippo";
+import { createShippoLabels, type ShippoRecipient } from "@/lib/shippo";
 import { getStripe } from "@/lib/stripe";
 
-const FULFILLMENT_VERSION = "sandbox-v1";
+const FULFILLMENT_VERSION = `${getCommerceMode()}-v1`;
 
 function getProductMetadata(line: Stripe.LineItem) {
   const product = line.price?.product;
@@ -57,12 +58,13 @@ function getCustomerShippingAddress(customer: Stripe.Customer): ShippoRecipient 
 }
 
 export async function fulfillCheckoutSession(session: Stripe.Checkout.Session) {
-  if (session.livemode || session.metadata?.fulfillmentVersion !== FULFILLMENT_VERSION) return;
+  const mode = getCommerceMode();
+  if (session.livemode !== isLiveCommerce() || session.metadata?.fulfillmentVersion !== FULFILLMENT_VERSION) return;
   if (session.payment_status !== "paid") return;
 
   const acquired = await acquireFulfillmentLock(session.id);
   if (!acquired) {
-    console.info("Sandbox order fulfillment already started", { sessionId: session.id });
+    console.info(`${mode} order fulfillment already started`, { sessionId: session.id });
     return;
   }
 
@@ -123,7 +125,7 @@ export async function fulfillCheckoutSession(session: Stripe.Checkout.Session) {
 
     const labels = localDelivery
       ? []
-      : await createShippoTestLabels({
+      : await createShippoLabels({
           address,
           parcels,
           shippingRateKey,
@@ -145,7 +147,7 @@ export async function fulfillCheckoutSession(session: Stripe.Checkout.Session) {
     await completeFulfillment(session.id, result);
 
     try {
-      await sendFulfillmentEmail({
+      await sendOrderEmails({
         orderId: session.id,
         customerEmail: session.customer_details?.email ?? "Not supplied",
         address,
@@ -157,13 +159,13 @@ export async function fulfillCheckoutSession(session: Stripe.Checkout.Session) {
         labels,
       });
     } catch (error) {
-      console.error("Sandbox order was fulfilled but merchant email failed", {
+      console.error(`${mode} order was fulfilled but order email delivery failed`, {
         sessionId: session.id,
         message: error instanceof Error ? error.message : "Unknown error",
       });
     }
 
-    console.info("Stripe sandbox order fulfilled", {
+    console.info(`Stripe ${mode} order fulfilled`, {
       sessionId: session.id,
       deliveryType: localDelivery ? "local" : "carrier",
       labelCount: labels.length,
@@ -186,13 +188,14 @@ function parseRenewalParcels(value: string | undefined) {
 }
 
 export async function fulfillSubscriptionRenewal(invoice: Stripe.Invoice) {
-  if (invoice.livemode || invoice.billing_reason !== "subscription_cycle") return;
+  const mode = getCommerceMode();
+  if (invoice.livemode !== isLiveCommerce() || invoice.billing_reason !== "subscription_cycle") return;
   const metadata = invoice.parent?.subscription_details?.metadata;
   if (metadata?.fulfillmentVersion !== FULFILLMENT_VERSION) return;
 
   const acquired = await acquireFulfillmentLock(invoice.id);
   if (!acquired) {
-    console.info("Sandbox renewal fulfillment already started", { invoiceId: invoice.id });
+    console.info(`${mode} renewal fulfillment already started`, { invoiceId: invoice.id });
     return;
   }
 
@@ -211,7 +214,7 @@ export async function fulfillSubscriptionRenewal(invoice: Stripe.Invoice) {
 
     const labels = localDelivery
       ? []
-      : await createShippoTestLabels({
+      : await createShippoLabels({
           address,
           parcels,
           shippingRateKey: metadata.shippingRateKey,
@@ -231,7 +234,7 @@ export async function fulfillSubscriptionRenewal(invoice: Stripe.Invoice) {
     });
 
     try {
-      await sendFulfillmentEmail({
+      await sendOrderEmails({
         orderId: invoice.id,
         customerEmail: customer.email ?? invoice.customer_email ?? "Not supplied",
         address,
@@ -240,12 +243,12 @@ export async function fulfillSubscriptionRenewal(invoice: Stripe.Invoice) {
         labels,
       });
     } catch (error) {
-      console.error("Sandbox renewal was fulfilled but merchant email failed", {
+      console.error(`${mode} renewal was fulfilled but order email delivery failed`, {
         invoiceId: invoice.id,
         message: error instanceof Error ? error.message : "Unknown error",
       });
     }
-    console.info("Stripe sandbox renewal fulfilled", {
+    console.info(`Stripe ${mode} renewal fulfilled`, {
       invoiceId: invoice.id,
       deliveryType: localDelivery ? "local" : "carrier",
       labelCount: labels.length,

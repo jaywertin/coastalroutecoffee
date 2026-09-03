@@ -1,4 +1,5 @@
 import Stripe from "stripe";
+import { getCommerceMode } from "@/lib/commerce";
 import { fulfillCheckoutSession, fulfillSubscriptionRenewal } from "@/lib/fulfillment";
 import { FulfillmentConfigurationError } from "@/lib/fulfillment-store";
 import { getStripe } from "@/lib/stripe";
@@ -15,6 +16,7 @@ const handledEvents = new Set<Stripe.Event.Type>([
 ]);
 
 export async function POST(request: Request) {
+  const mode = getCommerceMode();
   const signature = request.headers.get("stripe-signature");
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -61,13 +63,13 @@ export async function POST(request: Request) {
       await fulfillSubscriptionRenewal(event.data.object as Stripe.Invoice);
     }
   } catch (error) {
-    console.error("Stripe sandbox fulfillment failed", {
+    console.error(`Stripe ${mode} fulfillment failed`, {
       ...summary,
       name: error instanceof Error ? error.name : "UnknownError",
       message: error instanceof Error ? error.message : "Unknown error",
     });
     return Response.json(
-      { error: error instanceof FulfillmentConfigurationError ? error.message : "Sandbox fulfillment failed." },
+      { error: error instanceof FulfillmentConfigurationError ? error.message : "Fulfillment failed." },
       { status: 503 },
     );
   }

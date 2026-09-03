@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { SiteFooter } from "@/app/_components/site-footer";
 import { SiteHeader } from "@/app/_components/site-header";
 import { products } from "@/lib/products";
+import { getCommerceMode } from "@/lib/commerce";
 import { Storefront } from "./storefront";
 
 export const metadata: Metadata = {
@@ -10,6 +11,7 @@ export const metadata: Metadata = {
 };
 
 export default function ShopPage() {
+  const commerceMode = getCommerceMode();
   return (
     <main>
       <SiteHeader />
@@ -24,7 +26,7 @@ export default function ShopPage() {
       </section>
       <section className="bg-[#f6f0e5] px-6 py-14 sm:py-20 lg:px-10">
         <div className="mx-auto max-w-7xl">
-          <Storefront products={products} />
+          <Storefront products={products} commerceMode={commerceMode} />
         </div>
       </section>
       <section className="border-y border-[#102638]/10 bg-[#fffdf8] px-6 py-10 lg:px-10">

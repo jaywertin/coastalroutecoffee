@@ -1,7 +1,7 @@
 type RedisResponse<T> = { result?: T; error?: string };
 
 export class FulfillmentConfigurationError extends Error {
-  constructor(message = "Sandbox fulfillment storage is not configured.") {
+  constructor(message = "Fulfillment storage is not configured.") {
     super(message);
     this.name = "FulfillmentConfigurationError";
   }

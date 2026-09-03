@@ -1,4 +1,5 @@
 import { aggregatePackageRates, type ShippingParcel, type ShippingQuote, type ShippoRate } from "@/lib/shipping";
+import { getCommerceMode } from "@/lib/commerce";
 
 const SHIPPO_API_URL = "https://api.goshippo.com/shipments/";
 
@@ -40,7 +41,7 @@ type ShippoShipmentResponse = {
 };
 
 export class ShippingConfigurationError extends Error {
-  constructor(message = "Shipping rates are waiting for the Shippo test API token.") {
+  constructor(message = "Shipping rates are waiting for the configured Shippo API token.") {
     super(message);
     this.name = "ShippingConfigurationError";
   }
@@ -55,9 +56,11 @@ export class ShippingRateError extends Error {
 
 function getShippoToken() {
   const token = process.env.SHIPPO_API_TOKEN?.trim();
+  const mode = getCommerceMode();
   if (!token) throw new ShippingConfigurationError();
-  if (!token.startsWith("shippo_test_")) {
-    throw new ShippingConfigurationError("Shipping is locked to a Shippo test API token while the store is in sandbox mode.");
+  const expectedPrefix = mode === "live" ? "shippo_live_" : "shippo_test_";
+  if (!token.startsWith(expectedPrefix)) {
+    throw new ShippingConfigurationError(`Shippo credentials do not match COMMERCE_MODE=${mode}.`);
   }
   return token;
 }
@@ -127,7 +130,7 @@ type ShippoTransactionResponse = {
   messages?: Array<{ text?: string }>;
 };
 
-export async function createShippoTestLabels({
+export async function createShippoLabels({
   address,
   parcels,
   shippingRateKey,
@@ -168,12 +171,12 @@ export async function createShippoTestLabels({
     });
     const data = await response.json().catch(() => ({})) as ShippoTransactionResponse;
     if (!response.ok || data.status !== "SUCCESS" || !data.object_id || !data.label_url) {
-      console.error("Shippo test label creation failed", {
+      console.error("Shippo label creation failed", {
         status: response.status,
         transactionStatus: data.status,
         messages: data.messages?.map(({ text }) => text),
       });
-      throw new ShippingRateError("Shippo could not create the test shipping label.");
+      throw new ShippingRateError("Shippo could not create the shipping label.");
     }
     labels.push({
       transactionId: data.object_id,

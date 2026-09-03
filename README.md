@@ -6,9 +6,11 @@ This is the new Coastal Route Coffee website, built with [Next.js](https://nextj
 
 Copy `.env.example` to `.env.local` and provide the Stripe sandbox variables. USPS and UPS carrier rates additionally use:
 
+- `COMMERCE_MODE` — `sandbox` by default; use `live` only after matching live Stripe, Shippo, webhook, and email settings are ready
+
 - `SHIPPO_API_TOKEN` — a Shippo Test key while the storefront remains in sandbox mode
 
-Shippo credentials are read only by server routes and must never use a `NEXT_PUBLIC_` prefix. The sandbox storefront rejects live Shippo keys.
+Shippo credentials are read only by server routes and must never use a `NEXT_PUBLIC_` prefix. The storefront rejects any Shippo or Stripe credential that does not match `COMMERCE_MODE`.
 
 Sandbox fulfillment additionally uses:
 
@@ -17,7 +19,7 @@ Sandbox fulfillment additionally uses:
 - `FULFILLMENT_EMAIL_TO` — merchant notification recipient (defaults to `coastalroutecoffee@gmail.com`)
 - `FULFILLMENT_FROM_EMAIL` — verified Resend sender (uses Resend's sandbox sender during testing)
 
-Only checkout sessions created with the current sandbox fulfillment version are processed. Stripe live events and Shippo live tokens are rejected. Carrier orders create 4×6 Shippo test labels; local-delivery orders create no carrier label. Monthly subscription renewals use the current shipping address stored on the Stripe customer.
+Only checkout sessions created with the current fulfillment mode and version are processed. Sandbox mode rejects live Stripe events and Shippo keys; live mode rejects test credentials. Carrier orders create 4×6 Shippo labels; local-delivery orders create no carrier label. Monthly subscription renewals use the current shipping address stored on the Stripe customer. Each successful fulfillment sends a customer confirmation with tracking information and a separate merchant email containing the downloadable label.
 
 First, run the development server:
 
