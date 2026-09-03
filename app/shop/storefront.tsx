@@ -23,7 +23,7 @@ function ProductCard({ product, onAdd }: { product: Product; onAdd: (product: Pr
   const selected = product.options.find((option) => option.id === selectedId) ?? product.options[0];
 
   return (
-    <article className="overflow-hidden rounded-[1.75rem] border border-[#102638]/10 bg-[#fffdf8] shadow-[0_24px_70px_rgba(15,31,46,0.07)]">
+    <article className="flex h-full flex-col overflow-hidden rounded-[1.75rem] border border-[#102638]/10 bg-[#fffdf8] shadow-[0_24px_70px_rgba(15,31,46,0.07)]">
       <div className="relative aspect-[4/4.3] overflow-hidden bg-[#e8dfcf]">
         <div className="absolute inset-x-0 top-0 h-2" style={{ backgroundColor: product.accent }} />
         <Image
@@ -35,7 +35,7 @@ function ProductCard({ product, onAdd }: { product: Product; onAdd: (product: Pr
         />
         <span className="absolute top-5 left-5 rounded-full bg-[#fffdf8]/92 px-3 py-2 text-[0.62rem] font-extrabold tracking-[0.12em] uppercase">{product.roast}</span>
       </div>
-      <div className="p-6 sm:p-7">
+      <div className="flex flex-1 flex-col p-6 sm:p-7">
         <div className="flex items-start justify-between gap-5">
           <h2 className="font-display text-3xl leading-none">{product.name}</h2>
           <strong className="whitespace-nowrap text-base">{formatPrice(selected.price)}{selected.purchaseType === "subscription" ? "/mo" : ""}</strong>
@@ -43,7 +43,7 @@ function ProductCard({ product, onAdd }: { product: Product; onAdd: (product: Pr
         <p className="mt-3 text-sm font-semibold text-[#9b6a2d]">{product.notes}</p>
         <p className="mt-4 min-h-20 text-sm leading-6 text-[#102638]/62">{product.description}</p>
 
-        <fieldset className="mt-6">
+        <fieldset className="mt-6 flex-1">
           <legend className="mb-3 text-[0.66rem] font-extrabold tracking-[0.14em] uppercase">Choose your coffee</legend>
           <div className="grid grid-cols-2 gap-2">
             {product.options.map((option) => (
