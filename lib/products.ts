@@ -61,7 +61,7 @@ export const products: Product[] = [
     roast: "Roaster's selection",
     notes: "A new origin · Freshly roasted · Always whole bean",
     description:
-      "Take a new route every month with a rotating 12-ounce whole-bean coffee selected and roasted in San Clemente.",
+      "Take a new route every month with a rotating 12-ounce, whole-bean coffee hand selected from around the world.",
     image: "/images/coffee-of-the-month-label.png",
     imageAlt: "Coffee of the Month label with a gold world map",
     accent: "#c69a4b",
