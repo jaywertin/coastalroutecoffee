@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   },
   description:
     "Small-batch whole-bean coffee roasted in San Clemente for slow mornings, open roads, and the places worth taking your time to reach.",
-  metadataBase: new URL("https://coastalroutecoffee.vercel.app"),
+  metadataBase: new URL("https://coastalroutecoffee.com"),
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

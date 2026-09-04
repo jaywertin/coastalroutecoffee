@@ -5,7 +5,7 @@ import { CUSTOMER_PORTAL_URL, WEBSITE_URL } from "@/lib/site";
 
 const MERCHANT_EMAIL = "coastalroutecoffee@gmail.com";
 const REPLY_TO_EMAIL = "coastalroutecoffee@gmail.com";
-const LOGO_URL = "https://coastalroutecoffee.vercel.app/images/coastal-route-badge.png";
+const LOGO_URL = "https://coastalroutecoffee.com/images/coastal-route-badge.png";
 
 function escapeHtml(value: string) {
   return value.replace(/[&<>'"]/g, (character) => ({
