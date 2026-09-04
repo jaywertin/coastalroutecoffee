@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { CUSTOMER_PORTAL_URL } from "@/lib/site";
 
 export function SiteHeader({ dark = false }: { dark?: boolean }) {
   return (
@@ -19,6 +20,10 @@ export function SiteHeader({ dark = false }: { dark?: boolean }) {
           <Link href="/shop">Shop</Link>
           <Link href="/our-story" className="hidden sm:block">Our story</Link>
           <Link href="/shipping" className="hidden md:block">Delivery</Link>
+          <a href={CUSTOMER_PORTAL_URL} aria-label="Manage your subscription">
+            <span className="sm:hidden">Manage</span>
+            <span className="hidden sm:inline">Manage subscription</span>
+          </a>
         </nav>
       </header>
     </>

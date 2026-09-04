@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CUSTOMER_PORTAL_URL } from "@/lib/site";
 
 const socialLinks = [
   ["Instagram", "https://www.instagram.com/coastalroutecoffee/"],
@@ -19,6 +20,7 @@ export function SiteFooter() {
           <p className="footer-heading">Explore</p>
           <div className="mt-4 grid gap-3 text-sm text-white/65">
             <Link href="/shop">Shop coffee</Link>
+            <a href={CUSTOMER_PORTAL_URL}>Manage subscription</a>
             <Link href="/our-story">Our story</Link>
             <Link href="/shipping">Shipping & local delivery</Link>
             <Link href="/return-policy">Return policy</Link>

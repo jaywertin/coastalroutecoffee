@@ -1,10 +1,10 @@
 import type { ShippoLabel, ShippoRecipient } from "@/lib/shippo";
 import { getCommerceMode } from "@/lib/commerce";
 import { FulfillmentConfigurationError } from "@/lib/fulfillment-store";
+import { CUSTOMER_PORTAL_URL, WEBSITE_URL } from "@/lib/site";
 
 const MERCHANT_EMAIL = "coastalroutecoffee@gmail.com";
 const REPLY_TO_EMAIL = "coastalroutecoffee@gmail.com";
-const WEBSITE_URL = "https://coastalroutecoffee.com";
 const LOGO_URL = "https://coastalroutecoffee.vercel.app/images/coastal-route-badge.png";
 
 function escapeHtml(value: string) {
@@ -30,12 +30,14 @@ function brandedEmail({
   introduction,
   content,
   ctaLabel = "Visit Coastal Route Coffee",
+  ctaHref = WEBSITE_URL,
 }: {
   eyebrow: string;
   title: string;
   introduction: string;
   content: string;
   ctaLabel?: string;
+  ctaHref?: string;
 }) {
   return `<!doctype html>
   <html lang="en">
@@ -62,7 +64,7 @@ function brandedEmail({
                   <table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:30px;">
                     <tr>
                       <td style="background:#10293a;border-radius:999px;">
-                        <a href="${WEBSITE_URL}" style="display:inline-block;padding:14px 24px;color:#ffffff;font-size:12px;font-weight:700;letter-spacing:1.5px;text-decoration:none;text-transform:uppercase;">${escapeHtml(ctaLabel)}</a>
+                        <a href="${ctaHref}" style="display:inline-block;padding:14px 24px;color:#ffffff;font-size:12px;font-weight:700;letter-spacing:1.5px;text-decoration:none;text-transform:uppercase;">${escapeHtml(ctaLabel)}</a>
                       </td>
                     </tr>
                   </table>
@@ -150,6 +152,7 @@ export async function sendOrderEmails({
         `<li><a href="${escapeHtml(label.trackingUrl)}">Track package ${index + 1}</a> — ${escapeHtml(label.trackingNumber)}</li>`
       )).join("")
     : "<li>No carrier tracking is needed for free local delivery.</li>";
+  const includesSubscription = items.some(({ name }) => /monthly|subscription/i.test(name));
 
   const deliveries = [sendEmail({
     apiKey,
@@ -193,6 +196,7 @@ export async function sendOrderEmails({
           <p style="margin:20px 0;padding:16px 18px;background:#f4eee2;border-radius:12px;color:#334955;"><strong>Delivery:</strong> ${escapeHtml(delivery)}</p>
           <h2 style="margin:26px 0 10px;font-family:Georgia,'Times New Roman',serif;font-size:22px;">Deliver to</h2><p style="margin:0;color:#334955;line-height:1.7;">${addressHtml(address)}</p>
           <h2 style="margin:26px 0 10px;font-family:Georgia,'Times New Roman',serif;font-size:22px;">Tracking</h2><ul style="padding-left:20px;color:#334955;line-height:1.7;">${trackingRows}</ul>
+          ${includesSubscription ? `<p style="margin:24px 0 0;color:#52636d;font-size:15px;line-height:1.7;">Returning to review your delivery, payment method, or subscription? <a href="${CUSTOMER_PORTAL_URL}" style="color:#a66820;font-weight:700;">Manage your subscription</a>.</p>` : ""}
           ${mode === "sandbox" ? "<p style=\"color:#a66820;font-size:13px;\">This was a sandbox order. No real payment or postage was created.</p>" : ""}
         `,
       }),
@@ -229,7 +233,8 @@ export async function sendSubscriptionCancellationEmail({
       eyebrow: "Subscription update",
       title: "Your cancellation is confirmed.",
       introduction: "We’re sorry to see you go, and we’re genuinely thankful that you chose Coastal Route Coffee.",
-      ctaLabel: "Visit the coffee shop",
+      ctaLabel: "Manage subscription",
+      ctaHref: CUSTOMER_PORTAL_URL,
       content: `
         <div style="padding:20px;background:#f4eee2;border-left:4px solid #c49a4a;border-radius:10px;color:#334955;font-size:15px;line-height:1.7;">
           Your monthly coffee subscription is scheduled to end on <strong>${escapeHtml(cancellationDate)}</strong>. Your subscription remains active until then, and you will not be charged again.
