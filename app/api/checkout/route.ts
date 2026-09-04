@@ -5,6 +5,8 @@ import { getShippoQuotes, ShippingConfigurationError, ShippingRateError } from "
 import { buildShippingParcels, isLocalDeliveryZip, type ShippingQuote } from "@/lib/shipping";
 import { getStripe } from "@/lib/stripe";
 import { FULFILLMENT_VERSION } from "@/lib/fulfillment";
+import { enforceRateLimit, enforceSameOrigin, HttpRequestError, readLimitedJson } from "@/lib/http-security";
+import { getApplicationUrl } from "@/lib/site";
 
 export const runtime = "nodejs";
 
@@ -18,8 +20,10 @@ function stripeDeliveryEstimate(quote: ShippingQuote) {
 
 export async function POST(request: Request) {
   try {
+    enforceSameOrigin(request);
+    await enforceRateLimit(request, "checkout", 10, 600);
     const commerceMode = getCommerceMode();
-    const body: unknown = await request.json();
+    const body = await readLimitedJson(request);
     if (!body || typeof body !== "object") {
       return Response.json({ error: "Invalid checkout request." }, { status: 400 });
     }
@@ -59,7 +63,7 @@ export async function POST(request: Request) {
       }
     }
 
-    const origin = new URL(request.url).origin;
+    const origin = getApplicationUrl(request.url);
     const orderMetadata = {
       fulfillmentVersion: FULFILLMENT_VERSION,
       checkoutPhase: isLocalDelivery ? `local-delivery-${commerceMode}` : `shippo-shipping-${commerceMode}`,
@@ -112,7 +116,7 @@ export async function POST(request: Request) {
     const session = await getStripe().checkout.sessions.create({
       mode,
       line_items: productLineItems,
-      success_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${origin}/api/checkout/complete?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/checkout/canceled`,
       shipping_address_collection: { allowed_countries: ["US"] },
       ...(mode === "payment"
@@ -158,10 +162,13 @@ export async function POST(request: Request) {
       return Response.json({ error: "Stripe did not return a checkout address." }, { status: 502 });
     }
 
-    return Response.json({ url: session.url });
+    return Response.json({ url: session.url }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
-    if (error instanceof SyntaxError) {
-      return Response.json({ error: "Invalid checkout request." }, { status: 400 });
+    if (error instanceof HttpRequestError) {
+      return Response.json(
+        { error: error.message },
+        { status: error.status, headers: { "Cache-Control": "no-store", ...(error.status === 429 ? { "Retry-After": "60" } : {}) } },
+      );
     }
 
     if (error instanceof InvalidCartError) {

@@ -1,12 +1,15 @@
 import { hasMixedPurchaseTypes, InvalidCartError, resolveCartItems } from "@/lib/cart";
 import { getShippoQuotes, ShippingConfigurationError, ShippingRateError } from "@/lib/shippo";
 import { buildShippingParcels, isLocalDeliveryZip } from "@/lib/shipping";
+import { enforceRateLimit, enforceSameOrigin, HttpRequestError, readLimitedJson } from "@/lib/http-security";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   try {
-    const body: unknown = await request.json();
+    enforceSameOrigin(request);
+    await enforceRateLimit(request, "shipping-rates", 30, 60);
+    const body = await readLimitedJson(request);
     if (!body || typeof body !== "object") {
       return Response.json({ error: "Invalid shipping request." }, { status: 400 });
     }
@@ -26,17 +29,20 @@ export async function POST(request: Request) {
     }
 
     if (isLocalDeliveryZip(deliveryZip)) {
-      return Response.json({ localDelivery: true, quotes: [] });
+      return Response.json({ localDelivery: true, quotes: [] }, { headers: { "Cache-Control": "no-store" } });
     }
 
     const parcels = buildShippingParcels(
       resolvedItems.map(({ option, quantity }) => ({ size: option.size, quantity })),
     );
     const quotes = await getShippoQuotes(deliveryZip, parcels);
-    return Response.json({ localDelivery: false, quotes });
+    return Response.json({ localDelivery: false, quotes }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
-    if (error instanceof SyntaxError) {
-      return Response.json({ error: "Invalid shipping request." }, { status: 400 });
+    if (error instanceof HttpRequestError) {
+      return Response.json(
+        { error: error.message },
+        { status: error.status, headers: { "Cache-Control": "no-store", ...(error.status === 429 ? { "Retry-After": "60" } : {}) } },
+      );
     }
     if (error instanceof InvalidCartError) {
       return Response.json({ error: error.message }, { status: 400 });

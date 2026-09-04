@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-export function CustomerPortalButton({ sessionId }: { sessionId: string }) {
+export function CustomerPortalButton() {
   const [loadingAction, setLoadingAction] = useState<"manage" | "cancel" | null>(null);
   const [error, setError] = useState("");
 
@@ -14,7 +14,7 @@ export function CustomerPortalButton({ sessionId }: { sessionId: string }) {
       const response = await fetch("/api/customer-portal", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId, action }),
+        body: JSON.stringify({ action }),
       });
       const data = await response.json() as { url?: string; error?: string };
 

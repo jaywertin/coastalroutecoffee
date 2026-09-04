@@ -4,7 +4,9 @@ import { getCommerceMode, isLiveCommerce } from "@/lib/commerce";
 import {
   acquireFulfillmentLock,
   completeFulfillment,
+  getFulfillmentProgress,
   releaseFulfillmentLock,
+  saveFulfillmentProgress,
 } from "@/lib/fulfillment-store";
 import { sendOrderEmails } from "@/lib/notifications";
 import { buildShippingParcels, isLocalDeliveryZip } from "@/lib/shipping";
@@ -123,6 +125,7 @@ export async function fulfillCheckoutSession(session: Stripe.Checkout.Session) {
       });
     }
 
+    const existingLabels = localDelivery ? [] : await getFulfillmentProgress(session.id);
     const labels = localDelivery
       ? []
       : await createShippoLabels({
@@ -130,6 +133,8 @@ export async function fulfillCheckoutSession(session: Stripe.Checkout.Session) {
           parcels,
           shippingRateKey,
           orderId: session.id,
+          existingLabels,
+          onProgress: (progress) => saveFulfillmentProgress(session.id, progress),
         });
 
     const delivery = localDelivery
@@ -212,6 +217,7 @@ export async function fulfillSubscriptionRenewal(invoice: Stripe.Invoice) {
     }
     if (!localDelivery && !metadata.shippingRateKey) throw new Error("The subscription is missing its shipping service.");
 
+    const existingLabels = localDelivery ? [] : await getFulfillmentProgress(invoice.id);
     const labels = localDelivery
       ? []
       : await createShippoLabels({
@@ -219,6 +225,8 @@ export async function fulfillSubscriptionRenewal(invoice: Stripe.Invoice) {
           parcels,
           shippingRateKey: metadata.shippingRateKey,
           orderId: invoice.id,
+          existingLabels,
+          onProgress: (progress) => saveFulfillmentProgress(invoice.id, progress),
         });
     const delivery = localDelivery
       ? "Free local delivery"

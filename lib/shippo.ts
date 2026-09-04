@@ -1,19 +1,10 @@
+import "server-only";
+
+import { createHash } from "node:crypto";
 import { aggregatePackageRates, type ShippingParcel, type ShippingQuote, type ShippoRate } from "@/lib/shipping";
 import { getModeCredential } from "@/lib/commerce";
 
 const SHIPPO_API_URL = "https://api.goshippo.com/shipments/";
-
-const FROM_ADDRESS = {
-  name: "Jay Wertin",
-  company: "Coastal Route Coffee",
-  street1: "211 Calle Dorado",
-  city: "San Clemente",
-  state: "CA",
-  zip: "92672",
-  country: "US",
-  phone: "9494310683",
-  email: "coastalroutecoffee@gmail.com",
-};
 
 export type ShippoRecipient = {
   name: string;
@@ -28,6 +19,7 @@ export type ShippoRecipient = {
 };
 
 export type ShippoLabel = {
+  packageIndex: number;
   transactionId: string;
   labelUrl: string;
   trackingNumber: string;
@@ -67,6 +59,42 @@ function getShippoToken() {
   return token;
 }
 
+function getSenderAddress(): ShippoRecipient & { company: string } {
+  const fields = {
+    name: process.env.SHIPPO_SENDER_NAME?.trim(),
+    company: process.env.SHIPPO_SENDER_COMPANY?.trim(),
+    street1: process.env.SHIPPO_SENDER_STREET1?.trim(),
+    street2: process.env.SHIPPO_SENDER_STREET2?.trim(),
+    city: process.env.SHIPPO_SENDER_CITY?.trim(),
+    state: process.env.SHIPPO_SENDER_STATE?.trim(),
+    zip: process.env.SHIPPO_SENDER_ZIP?.trim(),
+    phone: process.env.SHIPPO_SENDER_PHONE?.trim(),
+    email: process.env.SHIPPO_SENDER_EMAIL?.trim(),
+  };
+  const missing = Object.entries(fields)
+    .filter(([key, value]) => key !== "street2" && !value)
+    .map(([key]) => key);
+  if (missing.length) {
+    throw new ShippingConfigurationError(`Shipping sender details are incomplete (${missing.join(", ")}).`);
+  }
+  if (!/^\d{5}(?:-\d{4})?$/.test(fields.zip!)) {
+    throw new ShippingConfigurationError("Shipping sender ZIP code is invalid.");
+  }
+
+  return {
+    name: fields.name!,
+    company: fields.company!,
+    street1: fields.street1!,
+    ...(fields.street2 ? { street2: fields.street2 } : {}),
+    city: fields.city!,
+    state: fields.state!,
+    zip: fields.zip!,
+    country: "US",
+    phone: fields.phone!,
+    email: fields.email!,
+  };
+}
+
 async function rateParcel(addressTo: ShippoRecipient | { zip: string; country: "US" }, parcel: ShippingParcel, token: string) {
   const response = await fetch(SHIPPO_API_URL, {
     method: "POST",
@@ -76,7 +104,7 @@ async function rateParcel(addressTo: ShippoRecipient | { zip: string; country: "
       "SHIPPO-API-VERSION": "2018-02-08",
     },
     body: JSON.stringify({
-      address_from: FROM_ADDRESS,
+      address_from: getSenderAddress(),
       address_to: addressTo,
       parcels: [{
         length: parcel.length,
@@ -129,19 +157,59 @@ type ShippoTransactionResponse = {
   label_url?: string;
   tracking_number?: string;
   tracking_url_provider?: string;
+  metadata?: string;
   messages?: Array<{ text?: string }>;
 };
+
+type ShippoTransactionListResponse = {
+  results?: ShippoTransactionResponse[];
+};
+
+function labelMetadata(orderId: string, packageIndex: number) {
+  const orderDigest = createHash("sha256").update(orderId).digest("hex").slice(0, 32);
+  return `crc-label:${orderDigest}:${packageIndex}`;
+}
+
+function transactionToLabel(transaction: ShippoTransactionResponse, packageIndex: number): ShippoLabel | null {
+  if (transaction.status !== "SUCCESS" || !transaction.object_id || !transaction.label_url) return null;
+  return {
+    packageIndex,
+    transactionId: transaction.object_id,
+    labelUrl: transaction.label_url,
+    trackingNumber: transaction.tracking_number ?? "Label created",
+    trackingUrl: transaction.tracking_url_provider ?? "",
+  };
+}
+
+async function findExistingLabel(token: string, metadata: string, packageIndex: number) {
+  const response = await fetch("https://api.goshippo.com/transactions/?object_status=SUCCESS&results=100", {
+    headers: {
+      Authorization: `ShippoToken ${token}`,
+      "SHIPPO-API-VERSION": "2018-02-08",
+    },
+    cache: "no-store",
+    signal: AbortSignal.timeout(10_000),
+  });
+  if (!response.ok) return null;
+  const data = await response.json().catch(() => ({})) as ShippoTransactionListResponse;
+  const transaction = data.results?.find((candidate) => candidate.metadata === metadata);
+  return transaction ? transactionToLabel(transaction, packageIndex) : null;
+}
 
 export async function createShippoLabels({
   address,
   parcels,
   shippingRateKey,
   orderId,
+  existingLabels = [],
+  onProgress,
 }: {
   address: ShippoRecipient;
   parcels: ShippingParcel[];
   shippingRateKey: string;
   orderId: string;
+  existingLabels?: ShippoLabel[];
+  onProgress?: (labels: ShippoLabel[]) => Promise<void>;
 }): Promise<ShippoLabel[]> {
   const token = getShippoToken();
   const rateGroups = await Promise.all(parcels.map((parcel) => rateParcel(address, parcel, token)));
@@ -153,8 +221,17 @@ export async function createShippoLabels({
     throw new ShippingRateError("The selected shipping service is no longer available for this address.");
   }
 
-  const labels: ShippoLabel[] = [];
-  for (const rate of rates as ShippoRate[]) {
+  const labels = existingLabels.filter(({ packageIndex }) => packageIndex >= 0 && packageIndex < parcels.length);
+  for (const [packageIndex, rate] of (rates as ShippoRate[]).entries()) {
+    if (labels.some((label) => label.packageIndex === packageIndex)) continue;
+    const metadata = labelMetadata(orderId, packageIndex);
+    const recovered = await findExistingLabel(token, metadata, packageIndex);
+    if (recovered) {
+      labels.push(recovered);
+      await onProgress?.([...labels].sort((a, b) => a.packageIndex - b.packageIndex));
+      continue;
+    }
+
     const response = await fetch("https://api.goshippo.com/transactions/", {
       method: "POST",
       headers: {
@@ -166,7 +243,7 @@ export async function createShippoLabels({
         rate: rate.object_id,
         async: false,
         label_file_type: "PDF_4x6",
-        metadata: orderId.slice(0, 100),
+        metadata,
       }),
       cache: "no-store",
       signal: AbortSignal.timeout(15_000),
@@ -180,12 +257,10 @@ export async function createShippoLabels({
       });
       throw new ShippingRateError("Shippo could not create the shipping label.");
     }
-    labels.push({
-      transactionId: data.object_id,
-      labelUrl: data.label_url,
-      trackingNumber: data.tracking_number ?? "Test label",
-      trackingUrl: data.tracking_url_provider ?? "",
-    });
+    const label = transactionToLabel(data, packageIndex);
+    if (!label) throw new ShippingRateError("Shippo returned an incomplete shipping label.");
+    labels.push(label);
+    await onProgress?.([...labels].sort((a, b) => a.packageIndex - b.packageIndex));
   }
-  return labels;
+  return labels.sort((a, b) => a.packageIndex - b.packageIndex);
 }

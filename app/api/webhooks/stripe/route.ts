@@ -37,7 +37,14 @@ export async function POST(request: Request) {
     return Response.json({ error: "Missing Stripe signature." }, { status: 400 });
   }
 
+  const declaredLength = Number(request.headers.get("content-length"));
+  if (Number.isFinite(declaredLength) && declaredLength > 1_048_576) {
+    return Response.json({ error: "Webhook payload is too large." }, { status: 413 });
+  }
   const payload = await request.text();
+  if (new TextEncoder().encode(payload).byteLength > 1_048_576) {
+    return Response.json({ error: "Webhook payload is too large." }, { status: 413 });
+  }
   let event: Stripe.Event;
 
   try {

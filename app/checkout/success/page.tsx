@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { SiteFooter } from "@/app/_components/site-footer";
 import { SiteHeader } from "@/app/_components/site-header";
 import { formatShippingService } from "@/lib/shipping";
 import { getCommerceMode } from "@/lib/commerce";
 import { getStripe } from "@/lib/stripe";
+import { ORDER_ACCESS_COOKIE, resolveOrderAccess } from "@/lib/order-access";
 import { CustomerPortalButton } from "./customer-portal-button";
 
 export const metadata: Metadata = { title: "Order Confirmed | Coastal Route Coffee" };
@@ -21,7 +24,12 @@ function formatTotal(amount: number | null, currency: string | null) {
 export default async function CheckoutSuccessPage({ searchParams }: { searchParams: Promise<{ session_id?: string }> }) {
   const commerceMode = getCommerceMode();
   const isSandbox = commerceMode === "sandbox";
-  const { session_id: sessionId } = await searchParams;
+  const { session_id: legacySessionId } = await searchParams;
+  if (legacySessionId?.startsWith("cs_")) {
+    redirect(`/api/checkout/complete?session_id=${encodeURIComponent(legacySessionId)}`);
+  }
+  const cookieStore = await cookies();
+  const sessionId = await resolveOrderAccess(cookieStore.get(ORDER_ACCESS_COOKIE)?.value);
   let session = null;
 
   if (sessionId?.startsWith("cs_") && process.env.STRIPE_SECRET_KEY) {
@@ -64,7 +72,7 @@ export default async function CheckoutSuccessPage({ searchParams }: { searchPara
             <div><dt className="font-bold">Status</dt><dd className="mt-1 text-[#102638]/62">{isSandbox ? "Test mode" : "Paid"}</dd></div>
           </dl>
 
-          {session?.mode === "subscription" && sessionId ? <CustomerPortalButton sessionId={sessionId} /> : null}
+          {session?.mode === "subscription" && sessionId ? <CustomerPortalButton /> : null}
           <Link href="/shop" className="mt-4 inline-flex text-sm font-bold text-[#9b6a2d]">Return to the shop →</Link>
         </div>
       </section>
