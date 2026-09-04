@@ -159,9 +159,52 @@ body {
 
 a:focus-visible,
 button:focus-visible,
-input:focus-visible {
+input:focus-visible,
+textarea:focus-visible {
   outline: 3px solid #d5a04d;
   outline-offset: 3px;
+}
+
+.contact-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  color: var(--ink);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.contact-field small {
+  color: rgb(16 38 56 / 45%);
+  font-size: 0.62rem;
+  font-weight: 600;
+}
+
+.contact-field input,
+.contact-field textarea {
+  width: 100%;
+  border: 1px solid rgb(16 38 56 / 16%);
+  border-radius: 0.85rem;
+  background: white;
+  color: var(--ink);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.contact-field input {
+  min-height: 3.25rem;
+  padding: 0 1rem;
+}
+
+.contact-field textarea {
+  resize: vertical;
+  padding: 0.9rem 1rem;
+  line-height: 1.55;
 }
 
 .button-secondary:hover {

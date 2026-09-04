@@ -20,6 +20,7 @@ export function SiteHeader({ dark = false }: { dark?: boolean }) {
           <Link href="/shop">Shop</Link>
           <Link href="/our-story" className="hidden sm:block">Our story</Link>
           <Link href="/shipping" className="hidden md:block">Delivery</Link>
+          <Link href="/contact" className="hidden lg:block">Contact</Link>
           <a href={CUSTOMER_PORTAL_URL} aria-label="Manage your subscription">
             <span className="sm:hidden">Manage</span>
             <span className="hidden sm:inline">Manage subscription</span>

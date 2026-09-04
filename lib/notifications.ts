@@ -91,6 +91,7 @@ async function sendEmail({
   subject,
   html,
   idempotencyKey,
+  replyTo = REPLY_TO_EMAIL,
 }: {
   apiKey: string;
   from: string;
@@ -98,6 +99,7 @@ async function sendEmail({
   subject: string;
   html: string;
   idempotencyKey: string;
+  replyTo?: string;
 }) {
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -106,7 +108,7 @@ async function sendEmail({
       "Content-Type": "application/json",
       "Idempotency-Key": idempotencyKey,
     },
-    body: JSON.stringify({ from, to: [to], reply_to: REPLY_TO_EMAIL, subject, html }),
+    body: JSON.stringify({ from, to: [to], reply_to: replyTo, subject, html }),
     cache: "no-store",
     signal: AbortSignal.timeout(8_000),
   });
@@ -114,6 +116,77 @@ async function sendEmail({
     console.error("Fulfillment email failed", { status: response.status, recipient: to === MERCHANT_EMAIL ? "merchant" : "customer" });
     throw new Error("Fulfillment email could not be sent.");
   }
+}
+
+export async function sendContactEmails({
+  inquiryId,
+  name,
+  email,
+  orderNumber,
+  subject,
+  message,
+}: {
+  inquiryId: string;
+  name: string;
+  email: string;
+  orderNumber?: string;
+  subject: string;
+  message: string;
+}) {
+  const apiKey = process.env.RESEND_API_KEY;
+  const mode = getCommerceMode();
+  if (!apiKey) throw new FulfillmentConfigurationError("Contact email is not configured.");
+  const from = process.env.FULFILLMENT_FROM_EMAIL ?? (mode === "live"
+    ? "Coastal Route Coffee <orders@coastalroutecoffee.com>"
+    : "Coastal Route Coffee <onboarding@resend.dev>");
+  const modePrefix = mode === "sandbox" ? "[TEST] " : "";
+  const safeMessage = escapeHtml(message).replace(/\n/g, "<br>");
+
+  await Promise.all([
+    sendEmail({
+      apiKey,
+      from,
+      to: process.env.FULFILLMENT_EMAIL_TO ?? MERCHANT_EMAIL,
+      replyTo: email,
+      subject: `${modePrefix}Website question from ${name}: ${subject}`,
+      idempotencyKey: `crc-${mode}-contact-merchant-${inquiryId}`,
+      html: brandedEmail({
+        eyebrow: "Website inquiry",
+        title: "A customer has a question.",
+        introduction: `${name} sent a message through the Coastal Route Coffee website. Reply to this email to respond directly.`,
+        ctaLabel: "Open the storefront",
+        content: `
+          <div style="border-top:1px solid #e6ddce;border-bottom:1px solid #e6ddce;padding:22px 0;color:#334955;font-size:14px;line-height:1.7;">
+            <p style="margin:0 0 8px;"><strong>Name:</strong> ${escapeHtml(name)}</p>
+            <p style="margin:0 0 8px;"><strong>Email:</strong> <a href="mailto:${escapeHtml(email)}" style="color:#a66820;">${escapeHtml(email)}</a></p>
+            ${orderNumber ? `<p style="margin:0 0 8px;"><strong>Order number:</strong> ${escapeHtml(orderNumber)}</p>` : ""}
+            <p style="margin:0;"><strong>Subject:</strong> ${escapeHtml(subject)}</p>
+          </div>
+          <h2 style="margin:26px 0 10px;font-family:Georgia,'Times New Roman',serif;font-size:22px;">Message</h2>
+          <p style="margin:0;color:#334955;font-size:15px;line-height:1.8;">${safeMessage}</p>
+        `,
+      }),
+    }),
+    sendEmail({
+      apiKey,
+      from,
+      to: email,
+      subject: `${modePrefix}We received your Coastal Route Coffee question`,
+      idempotencyKey: `crc-${mode}-contact-customer-${inquiryId}`,
+      html: brandedEmail({
+        eyebrow: "Message received",
+        title: `Thanks for reaching out, ${name}.`,
+        introduction: "Your note made it to us. We’ll read it carefully and reply as soon as we can.",
+        ctaLabel: "Visit the coffee shop",
+        content: `
+          <div style="padding:20px;background:#f4eee2;border-left:4px solid #c49a4a;border-radius:10px;color:#334955;font-size:15px;line-height:1.7;">
+            <strong>Your question:</strong><br>${safeMessage}
+          </div>
+          <p style="margin:24px 0 0;color:#52636d;font-size:15px;line-height:1.7;">If you need to add anything, simply reply to this email.</p>
+        `,
+      }),
+    }),
+  ]);
 }
 
 export async function sendOrderEmails({
