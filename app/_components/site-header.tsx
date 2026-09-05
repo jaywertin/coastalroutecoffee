@@ -23,7 +23,12 @@ export async function SiteHeader({ dark = false, solidWordmark = false }: { dark
           <Link href="/our-story" className="hidden sm:block">Our story</Link>
           <Link href="/shipping" className="hidden md:block">Delivery</Link>
           <Link href="/contact" className="hidden lg:block">Contact</Link>
-          <a href={CUSTOMER_PORTAL_URL} aria-label="Manage your subscription">
+          <a
+            href={CUSTOMER_PORTAL_URL}
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Manage your subscription (opens in a new tab)"
+          >
             <span className="sm:hidden">Manage</span>
             <span className="hidden sm:inline">Manage subscription</span>
           </a>
