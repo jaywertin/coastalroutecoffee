@@ -2,13 +2,16 @@ import Image from "next/image";
 import Link from "next/link";
 import { SiteFooter } from "@/app/_components/site-footer";
 import { SiteHeader } from "@/app/_components/site-header";
-import { formatPrice, products } from "@/lib/products";
+import { getPublicProducts } from "@/lib/product-catalog";
+import { formatPrice } from "@/lib/products";
+import { getWebsiteContent } from "@/lib/site-content";
 
 function Arrow() {
   return <span aria-hidden="true">↗</span>;
 }
 
-export default function Home() {
+export default async function Home() {
+  const [content, products] = await Promise.all([getWebsiteContent(), getPublicProducts()]);
   return (
     <main className="overflow-hidden bg-[#f6f0e5]">
       <section className="relative min-h-[820px] bg-[#0f1f2e] text-white">
@@ -17,9 +20,9 @@ export default function Home() {
         <div className="relative z-10"><SiteHeader dark /></div>
         <div className="relative z-10 mx-auto flex min-h-[690px] max-w-7xl items-center px-6 pb-16 lg:px-10">
           <div className="max-w-2xl pt-8">
-            <p className="eyebrow mb-6 text-[#e2b45d]">Coffee for the long way around</p>
-            <h1 className="font-display text-[3.25rem] leading-[0.86] tracking-[-0.055em] sm:text-7xl lg:text-[7.3rem]">The Road to<br /><em className="font-normal">Better Coffee.</em></h1>
-            <p className="mt-8 max-w-lg text-base leading-7 text-white/76 sm:text-lg">Thoughtfully roasted whole-bean coffee inspired by the wild coast and the roads worth taking your time to travel.</p>
+            <p className="eyebrow mb-6 text-[#e2b45d]">{content.heroEyebrow}</p>
+            <h1 className="font-display text-[3.25rem] leading-[0.86] tracking-[-0.055em] sm:text-7xl lg:text-[7.3rem]">{content.heroTitle}<br /><em className="font-normal">{content.heroEmphasis}</em></h1>
+            <p className="mt-8 max-w-lg text-base leading-7 text-white/76 sm:text-lg">{content.heroBody}</p>
             <div className="mt-9 flex flex-wrap gap-3">
               <Link href="/shop" className="button-primary">Shop whole-bean coffee <Arrow /></Link>
               <Link href="/our-story" className="button-secondary">Our story</Link>
@@ -71,9 +74,9 @@ export default function Home() {
           </div>
           <div className="flex items-center px-7 py-20 sm:px-14 lg:px-20">
             <div className="max-w-xl">
-              <p className="eyebrow text-[#e2b45d]">Coffee of the Month</p>
-              <h2 className="font-display mt-5 text-5xl leading-[0.95] tracking-[-0.04em] sm:text-6xl">A new route every month.</h2>
-              <p className="mt-7 text-base leading-7 text-white/72">Discover a rotating 12-ounce whole-bean coffee selected by the roaster and delivered monthly for $20.</p>
+              <p className="eyebrow text-[#e2b45d]">{content.featuredEyebrow}</p>
+              <h2 className="font-display mt-5 text-5xl leading-[0.95] tracking-[-0.04em] sm:text-6xl">{content.featuredTitle}</h2>
+              <p className="mt-7 text-base leading-7 text-white/72">{content.featuredBody}</p>
               <ul className="mt-8 grid gap-4 text-sm text-white/85">
                 <li className="flex gap-3"><span className="text-[#e2b45d]">✓</span> A different roaster’s selection</li>
                 <li className="flex gap-3"><span className="text-[#e2b45d]">✓</span> Freshly roasted in San Clemente</li>
@@ -87,16 +90,16 @@ export default function Home() {
 
       <section className="relative px-6 py-24 sm:py-32 lg:px-10">
         <div className="mx-auto grid max-w-6xl gap-14 lg:grid-cols-[0.65fr_1.35fr] lg:items-start">
-          <div><p className="eyebrow text-[#9b6a2d]">Why Coastal Route</p><p className="mt-5 max-w-xs text-sm leading-6 text-[#102638]/60">The best coffee, like the best journeys, rewards slowing down.</p></div>
-          <div><blockquote className="font-display text-4xl leading-[1.08] tracking-[-0.035em] sm:text-6xl">“If you’re ready to get off the main highway, try the Coastal Route and enjoy the journey.”</blockquote><Link href="/our-story" className="button-dark mt-8">Read our story <span aria-hidden="true">→</span></Link></div>
+          <div><p className="eyebrow text-[#9b6a2d]">{content.storyEyebrow}</p><p className="mt-5 max-w-xs text-sm leading-6 text-[#102638]/60">{content.storyIntro}</p></div>
+          <div><blockquote className="font-display text-4xl leading-[1.08] tracking-[-0.035em] sm:text-6xl">“{content.storyQuote}”</blockquote><Link href="/our-story" className="button-dark mt-8">Read our story <span aria-hidden="true">→</span></Link></div>
         </div>
       </section>
 
       <section className="px-5 pb-5 sm:px-8 sm:pb-8">
         <div className="rounded-[2rem] bg-[#d5a04d] px-7 py-16 text-center sm:py-20">
-          <p className="eyebrow">Local to South Orange County?</p>
-          <h2 className="font-display mx-auto mt-4 max-w-3xl text-5xl leading-none tracking-[-0.04em] sm:text-7xl">Your coffee may travel free.</h2>
-          <p className="mx-auto mt-6 max-w-xl text-sm leading-6 text-[#102638]/70">Free local delivery is available in designated ZIP codes with no minimum. Typical delivery is 3–5 business days.</p>
+          <p className="eyebrow">{content.localEyebrow}</p>
+          <h2 className="font-display mx-auto mt-4 max-w-3xl text-5xl leading-none tracking-[-0.04em] sm:text-7xl">{content.localTitle}</h2>
+          <p className="mx-auto mt-6 max-w-xl text-sm leading-6 text-[#102638]/70">{content.localBody}</p>
           <Link href="/shipping" className="mt-9 inline-flex rounded-full bg-[#102638] px-7 py-4 text-xs font-bold tracking-[0.13em] text-white uppercase">Check your ZIP code <span className="ml-3" aria-hidden="true">↗</span></Link>
         </div>
       </section>

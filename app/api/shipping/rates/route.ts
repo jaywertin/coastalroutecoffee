@@ -2,6 +2,7 @@ import { hasMixedPurchaseTypes, InvalidCartError, resolveCartItems } from "@/lib
 import { getShippoQuotes, ShippingConfigurationError, ShippingRateError } from "@/lib/shippo";
 import { buildShippingParcels, isLocalDeliveryZip } from "@/lib/shipping";
 import { enforceRateLimit, enforceSameOrigin, HttpRequestError, readLimitedJson } from "@/lib/http-security";
+import { getPublicProducts } from "@/lib/product-catalog";
 
 export const runtime = "nodejs";
 
@@ -20,7 +21,7 @@ export async function POST(request: Request) {
       return Response.json({ error: "Enter a valid 5-digit ZIP code." }, { status: 400 });
     }
 
-    const resolvedItems = resolveCartItems(items);
+    const resolvedItems = resolveCartItems(items, await getPublicProducts());
     if (hasMixedPurchaseTypes(resolvedItems)) {
       return Response.json(
         { error: "Please check out subscriptions and one-time purchases separately." },

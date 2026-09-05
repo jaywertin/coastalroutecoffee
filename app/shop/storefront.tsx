@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { formatPrice, type Product, type ProductOption } from "@/lib/products";
 import { formatShippingService, isLocalDeliveryZip, type ShippingQuote } from "@/lib/shipping";
 import type { CommerceMode } from "@/lib/commerce";
+import type { PublicInventoryStatus } from "@/lib/inventory";
 
 type CartItem = {
   key: string;
@@ -19,9 +20,11 @@ function optionLabel(option: ProductOption) {
   return `${option.size} · ${option.purchaseType === "subscription" ? "Monthly" : "One-time"}`;
 }
 
-function ProductCard({ product, onAdd }: { product: Product; onAdd: (product: Product, option: ProductOption) => void }) {
-  const [selectedId, setSelectedId] = useState(product.options[0].id);
+function ProductCard({ product, inventory, onAdd }: { product: Product; inventory: Record<string, PublicInventoryStatus>; onAdd: (product: Product, option: ProductOption) => void }) {
+  const [selectedId, setSelectedId] = useState(() => product.options.find((option) => inventory[option.inventorySku]?.available)?.id ?? product.options[0].id);
   const selected = product.options.find((option) => option.id === selectedId) ?? product.options[0];
+  const selectedInventory = inventory[selected.inventorySku];
+  const available = selectedInventory?.available ?? true;
 
   return (
     <article className="flex h-full flex-col overflow-hidden rounded-[1.75rem] border border-[#102638]/10 bg-[#fffdf8] shadow-[0_24px_70px_rgba(15,31,46,0.07)]">
@@ -52,27 +55,28 @@ function ProductCard({ product, onAdd }: { product: Product; onAdd: (product: Pr
                 key={option.id}
                 type="button"
                 aria-pressed={selectedId === option.id}
+                disabled={inventory[option.inventorySku]?.available === false}
                 className="option-button"
                 data-selected={selectedId === option.id}
                 onClick={() => setSelectedId(option.id)}
               >
                 <span>{option.size}</span>
-                <span className="text-[0.62rem] opacity-65">{option.purchaseType === "subscription" ? "Monthly" : "One-time"}</span>
+                <span className="text-[0.62rem] opacity-65">{inventory[option.inventorySku]?.available === false ? "Sold out" : option.purchaseType === "subscription" ? "Monthly" : "One-time"}</span>
               </button>
             ))}
           </div>
         </fieldset>
 
-        <p className="mt-4 text-xs text-[#102638]/52">Whole bean · {selected.purchaseType === "subscription" ? "Cancel anytime; email us to pause" : "Single purchase"}</p>
-        <button type="button" className="mt-5 w-full rounded-full bg-[#102638] px-5 py-4 text-xs font-extrabold tracking-[0.13em] text-white uppercase transition hover:-translate-y-0.5 hover:bg-[#17364f]" onClick={() => onAdd(product, selected)}>
-          Add to cart · {formatPrice(selected.price)}
+        <p className="mt-4 text-xs text-[#102638]/52">{selectedInventory?.lowStock ? `Only ${selectedInventory.quantity} left · ` : "Whole bean · "}{selected.purchaseType === "subscription" ? "Cancel anytime; email us to pause" : "Single purchase"}</p>
+        <button type="button" disabled={!available} className="mt-5 w-full rounded-full bg-[#102638] px-5 py-4 text-xs font-extrabold tracking-[0.13em] text-white uppercase transition enabled:hover:-translate-y-0.5 enabled:hover:bg-[#17364f] disabled:cursor-not-allowed disabled:bg-[#102638]/35" onClick={() => onAdd(product, selected)}>
+          {available ? `Add to cart · ${formatPrice(selected.price)}` : "Sold out"}
         </button>
       </div>
     </article>
   );
 }
 
-export function Storefront({ products, commerceMode }: { products: Product[]; commerceMode: CommerceMode }) {
+export function Storefront({ products, commerceMode, inventory }: { products: Product[]; commerceMode: CommerceMode; inventory: Record<string, PublicInventoryStatus> }) {
   const isSandbox = commerceMode === "sandbox";
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setCartOpen] = useState(false);
@@ -109,6 +113,13 @@ export function Storefront({ products, commerceMode }: { products: Product[]; co
   }
 
   function addToCart(product: Product, option: ProductOption) {
+    const stock = inventory[option.inventorySku];
+    const skuInCart = cart.filter((item) => item.option.inventorySku === option.inventorySku).reduce((total, item) => total + item.quantity, 0);
+    if (stock?.available === false || (stock?.quantity !== null && stock?.quantity !== undefined && skuInCart >= stock.quantity)) {
+      setCheckoutError("That coffee is sold out in the selected size.");
+      setCartOpen(true);
+      return;
+    }
     if (itemCount >= 10) {
       setCheckoutError("Online checkout supports up to 10 bags per order.");
       setCartOpen(true);
@@ -122,6 +133,7 @@ export function Storefront({ products, commerceMode }: { products: Product[]; co
     }
 
     const key = `${product.id}:${option.id}`;
+    setCheckoutError("");
     setCart((current) => {
       const existing = current.find((item) => item.key === key);
       if (existing) return current.map((item) => item.key === key ? { ...item, quantity: item.quantity + 1 } : item);
@@ -132,7 +144,22 @@ export function Storefront({ products, commerceMode }: { products: Product[]; co
   }
 
   function updateQuantity(key: string, quantity: number) {
-    setCart((current) => quantity <= 0 ? current.filter((item) => item.key !== key) : current.map((item) => item.key === key ? { ...item, quantity } : item));
+    if (quantity <= 0) {
+      setCart((current) => current.filter((item) => item.key !== key));
+      setCheckoutError("");
+      clearShippingSelection();
+      return;
+    }
+    const selected = cart.find((item) => item.key === key);
+    if (!selected) return;
+    const stock = inventory[selected.option.inventorySku];
+    const otherQuantity = cart.filter((item) => item.key !== key && item.option.inventorySku === selected.option.inventorySku).reduce((total, item) => total + item.quantity, 0);
+    if (stock?.quantity !== null && stock?.quantity !== undefined && otherQuantity + quantity > stock.quantity) {
+      setCheckoutError(`Only ${stock.quantity} bags are available in that size.`);
+      return;
+    }
+    setCheckoutError("");
+    setCart((current) => current.map((item) => item.key === key ? { ...item, quantity } : item));
     clearShippingSelection();
   }
 
@@ -225,7 +252,7 @@ export function Storefront({ products, commerceMode }: { products: Product[]; co
         </button>
       </div>
       <div className="grid gap-7 lg:grid-cols-3">
-        {products.map((product) => <ProductCard key={product.id} product={product} onAdd={addToCart} />)}
+        {products.map((product) => <ProductCard key={product.id} product={product} inventory={inventory} onAdd={addToCart} />)}
       </div>
       <p className="mt-8 text-center text-sm text-[#102638]/58" aria-live="polite">{itemCount ? `${itemCount} ${itemCount === 1 ? "item" : "items"} in your cart.` : "Choose a size and purchase type to begin."}</p>
 

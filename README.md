@@ -8,6 +8,9 @@ Copy `.env.example` to `.env.local` and provide the Stripe sandbox variables. US
 
 - `COMMERCE_MODE` — `sandbox` by default; use `live` only after the dedicated live credentials below are ready
 
+- `ADMIN_PASSWORD` — a unique password of at least 12 characters for `/admin`
+- `ADMIN_SESSION_SECRET` — a random secret of at least 32 characters used to sign 12-hour admin sessions
+
 - `SHIPPO_API_TOKEN` — a Shippo Test key while the storefront remains in sandbox mode
 - `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` — Stripe sandbox credentials
 - `SHIPPO_LIVE_API_TOKEN` — Shippo Live key, used only when `COMMERCE_MODE=live`
@@ -21,13 +24,21 @@ Sandbox fulfillment additionally uses:
 - `RESEND_API_KEY` — optional merchant fulfillment email delivery
 - `FULFILLMENT_EMAIL_TO` — merchant notification recipient (defaults to `coastalroutecoffee@gmail.com`)
 - `FULFILLMENT_FROM_EMAIL` — verified Resend sender (uses Resend's sandbox sender during testing)
+- `BLOB_STORE_ID` plus Vercel OIDC authentication — preferred Vercel Blob connection for admin product-image uploads
+- `BLOB_READ_WRITE_TOKEN` — legacy Vercel Blob credential, still supported for older connections
+
+## Roastery admin
+
+Visit `/admin` to add, edit, show, or hide products; manage physical-SKU inventory; and edit the storefront's homepage, announcement-bar, and shop-introduction copy. Product catalog data, inventory, and content are stored in the same Upstash Redis instance used by fulfillment. Products are hidden rather than deleted so paid orders and existing subscriptions retain stable identifiers. A blank inventory quantity means the SKU is available but its count is not tracked; entering a quantity enables low-stock and sold-out behavior. One-time and subscription purchase options for the same coffee and bag size share inventory.
+
+Admin access uses an HTTP-only, same-site session cookie signed with `ADMIN_SESSION_SECRET`. The password and signing secret remain server-only. Rotate the signing secret to invalidate every active admin session.
 
 Only checkout sessions created with the current fulfillment mode and version are processed. Sandbox mode rejects live Stripe events and Shippo keys; live mode rejects test credentials. Carrier orders create 4×6 Shippo labels; local-delivery orders create no carrier label. Monthly subscription renewals use the current shipping address stored on the Stripe customer. Each successful fulfillment sends a customer confirmation with tracking information and a separate merchant email containing the downloadable label.
 
 First, run the development server:
 
 ```bash
-pnpm dev
+npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.

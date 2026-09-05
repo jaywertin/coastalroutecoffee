@@ -1,4 +1,4 @@
-import { products, type Product, type ProductOption } from "@/lib/products";
+import { defaultProducts, type Product, type ProductOption } from "@/lib/products";
 
 export const MAX_CART_UNITS = 10;
 
@@ -33,7 +33,7 @@ function isCheckoutItem(value: unknown): value is CheckoutItem {
   );
 }
 
-export function resolveCartItems(items: unknown): ResolvedCartItem[] {
+export function resolveCartItems(items: unknown, catalog: Product[] = defaultProducts, { allowInactive = false } = {}): ResolvedCartItem[] {
   if (!Array.isArray(items) || items.length === 0 || items.length > 20 || !items.every(isCheckoutItem)) {
     throw new InvalidCartError();
   }
@@ -44,9 +44,9 @@ export function resolveCartItems(items: unknown): ResolvedCartItem[] {
   }
 
   return items.map((item) => {
-    const product = products.find((candidate) => candidate.id === item.productId);
+    const product = catalog.find((candidate) => candidate.id === item.productId && (allowInactive || candidate.active));
     const option = product?.options.find((candidate) => candidate.id === item.optionId);
-    if (!product || !option) throw new InvalidCartError();
+    if (!product || !option || (!allowInactive && !option.active)) throw new InvalidCartError();
     return { product, option, quantity: item.quantity };
   });
 }

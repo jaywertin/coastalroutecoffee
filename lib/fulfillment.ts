@@ -12,6 +12,8 @@ import { sendOrderEmails } from "@/lib/notifications";
 import { buildShippingParcels, isLocalDeliveryZip } from "@/lib/shipping";
 import { createShippoLabels, type ShippoRecipient } from "@/lib/shippo";
 import { getStripe } from "@/lib/stripe";
+import { commitInventorySale } from "@/lib/inventory";
+import { getProductCatalog } from "@/lib/product-catalog";
 
 const FULFILLMENT_VERSION = `${getCommerceMode()}-v1`;
 
@@ -81,7 +83,8 @@ export async function fulfillCheckoutSession(session: Stripe.Checkout.Session) {
       if (!metadata?.productId || !metadata.optionId) return [];
       return [{ productId: metadata.productId, optionId: metadata.optionId, quantity: line.quantity ?? 1 }];
     });
-    const resolvedItems = resolveCartItems(checkoutItems);
+    // A product may be hidden after payment but before its webhook is processed.
+    const resolvedItems = resolveCartItems(checkoutItems, await getProductCatalog(), { allowInactive: true });
     const address = getShippingAddress(session);
     const quotedZip = session.metadata?.deliveryZip;
     if (!quotedZip || address.zip.slice(0, 5) !== quotedZip) {
@@ -94,6 +97,7 @@ export async function fulfillCheckoutSession(session: Stripe.Checkout.Session) {
     );
     const shippingRateKey = session.metadata?.shippingRateKey;
     if (!localDelivery && !shippingRateKey) throw new Error("The paid order is missing its selected shipping service.");
+    await commitInventorySale(session.id, resolvedItems.map(({ option, quantity }) => ({ inventorySku: option.inventorySku, quantity })));
 
     if (typeof session.customer === "string") {
       await stripe.customers.update(session.customer, {
@@ -121,6 +125,7 @@ export async function fulfillCheckoutSession(session: Stripe.Checkout.Session) {
           shippingCarrier: session.metadata?.shippingCarrier ?? "Local delivery",
           shippingService: session.metadata?.shippingService ?? "Free local delivery",
           parcels: JSON.stringify(parcels.map(({ length, width, height, weight }) => [length, width, height, weight])),
+          inventoryItems: session.metadata?.inventoryItems ?? "[]",
         },
       });
     }
@@ -192,6 +197,24 @@ function parseRenewalParcels(value: string | undefined) {
   return parsed.map(([length, width, height, weight]) => ({ length, width, height, weight }));
 }
 
+function parseRenewalInventory(value: string | undefined) {
+  // Subscriptions created before inventory tracking remain fulfillable but untracked.
+  if (!value) return [];
+  const parsed: unknown = JSON.parse(value);
+  if (!Array.isArray(parsed) || !parsed.length || !parsed.every((item) => (
+    item && typeof item === "object"
+    && typeof (item as { sku?: unknown }).sku === "string"
+    && Number.isInteger((item as { quantity?: unknown }).quantity)
+    && Number((item as { quantity?: unknown }).quantity) > 0
+  ))) {
+    throw new Error("The subscription inventory configuration is invalid.");
+  }
+  return parsed.map((item) => ({
+    inventorySku: (item as { sku: string }).sku,
+    quantity: Number((item as { quantity: number }).quantity),
+  }));
+}
+
 export async function fulfillSubscriptionRenewal(invoice: Stripe.Invoice) {
   const mode = getCommerceMode();
   if (invoice.livemode !== isLiveCommerce() || invoice.billing_reason !== "subscription_cycle") return;
@@ -211,11 +234,13 @@ export async function fulfillSubscriptionRenewal(invoice: Stripe.Invoice) {
     if (customer.deleted) throw new Error("The renewal customer was deleted.");
     const address = getCustomerShippingAddress(customer);
     const parcels = parseRenewalParcels(metadata.parcels);
+    const inventoryItems = parseRenewalInventory(metadata.inventoryItems);
     const localDelivery = metadata.shippingType === "local" && isLocalDeliveryZip(address.zip.slice(0, 5));
     if (metadata.shippingType === "local" && !localDelivery) {
       throw new Error("The subscription shipping address is no longer eligible for free local delivery.");
     }
     if (!localDelivery && !metadata.shippingRateKey) throw new Error("The subscription is missing its shipping service.");
+    await commitInventorySale(invoice.id, inventoryItems);
 
     const existingLabels = localDelivery ? [] : await getFulfillmentProgress(invoice.id);
     const labels = localDelivery

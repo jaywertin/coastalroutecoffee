@@ -1,12 +1,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import { CUSTOMER_PORTAL_URL } from "@/lib/site";
+import { getWebsiteContent } from "@/lib/site-content";
 
-export function SiteHeader({ dark = false }: { dark?: boolean }) {
+export async function SiteHeader({ dark = false }: { dark?: boolean }) {
+  const { announcement } = await getWebsiteContent();
   return (
     <>
       <div className="bg-[#0f1f2e] px-5 py-2.5 text-center text-[0.65rem] font-semibold tracking-[0.16em] text-[#f6f0e4] uppercase">
-        Whole bean · Small-batch roasted in San Clemente
+        {announcement}
       </div>
       <header className={dark ? "site-header site-header-dark" : "site-header"}>
         <Link href="/" className="flex items-center gap-3" aria-label="Coastal Route Coffee home">

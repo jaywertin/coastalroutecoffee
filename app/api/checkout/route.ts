@@ -7,6 +7,8 @@ import { getStripe } from "@/lib/stripe";
 import { FULFILLMENT_VERSION } from "@/lib/fulfillment";
 import { enforceRateLimit, enforceSameOrigin, HttpRequestError, readLimitedJson } from "@/lib/http-security";
 import { getApplicationUrl } from "@/lib/site";
+import { assertInventoryAvailable, InventoryUnavailableError } from "@/lib/inventory";
+import { getPublicProducts } from "@/lib/product-catalog";
 
 export const runtime = "nodejs";
 
@@ -35,7 +37,8 @@ export async function POST(request: Request) {
       return Response.json({ error: "Enter a valid 5-digit ZIP code." }, { status: 400 });
     }
 
-    const resolvedItems = resolveCartItems(items);
+    const resolvedItems = resolveCartItems(items, await getPublicProducts());
+    await assertInventoryAvailable(resolvedItems.map(({ option, quantity }) => ({ inventorySku: option.inventorySku, quantity })));
     if (hasMixedPurchaseTypes(resolvedItems)) {
       return Response.json(
         { error: "Please check out subscriptions and one-time purchases separately." },
@@ -64,6 +67,10 @@ export async function POST(request: Request) {
     }
 
     const origin = getApplicationUrl(request.url);
+    const inventoryItems = Array.from(resolvedItems.reduce((result, { option, quantity }) => {
+      result.set(option.inventorySku, (result.get(option.inventorySku) ?? 0) + quantity);
+      return result;
+    }, new Map<string, number>())).map(([sku, quantity]) => ({ sku, quantity }));
     const orderMetadata = {
       fulfillmentVersion: FULFILLMENT_VERSION,
       checkoutPhase: isLocalDelivery ? `local-delivery-${commerceMode}` : `shippo-shipping-${commerceMode}`,
@@ -74,6 +81,7 @@ export async function POST(request: Request) {
       shippingService: shippingQuote?.service ?? "Free local delivery",
       shippingAmountCents: String(shippingQuote?.amountCents ?? 0),
       shippingDeliveryDays: String(shippingQuote?.deliveryDays ?? ""),
+      inventoryItems: JSON.stringify(inventoryItems),
     };
 
     const productLineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = resolvedItems.map(({ product, option, quantity }) => ({
@@ -181,6 +189,10 @@ export async function POST(request: Request) {
 
     if (error instanceof ShippingRateError) {
       return Response.json({ error: error.message }, { status: 502 });
+    }
+
+    if (error instanceof InventoryUnavailableError) {
+      return Response.json({ error: error.message }, { status: 409 });
     }
 
     if (error instanceof Stripe.errors.StripeError) {

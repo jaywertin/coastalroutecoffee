@@ -138,6 +138,11 @@ body {
   background: #eee4d3;
 }
 
+.option-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
 .quantity-button {
   display: inline-grid;
   height: 1.8rem;
@@ -194,6 +199,37 @@ textarea:focus-visible {
   font-weight: 500;
   letter-spacing: normal;
   text-transform: none;
+}
+
+.admin-field {
+  min-height: 3rem;
+  width: 100%;
+  border: 1px solid rgb(16 38 56 / 16%);
+  border-radius: 0.8rem;
+  background: #fffdf8;
+  padding-inline: 0.9rem;
+  color: var(--ink);
+  font-family: "Avenir Next", Avenir, "Helvetica Neue", Arial, sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  letter-spacing: normal;
+  text-transform: none;
+  outline: none;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.admin-label {
+  display: block;
+  color: var(--ink);
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.admin-field:focus {
+  border-color: #9b6a2d;
+  box-shadow: 0 0 0 3px rgb(213 160 77 / 18%);
 }
 
 .contact-field input {
