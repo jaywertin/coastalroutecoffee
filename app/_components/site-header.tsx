@@ -3,7 +3,7 @@ import Link from "next/link";
 import { CUSTOMER_PORTAL_URL } from "@/lib/site";
 import { getWebsiteContent } from "@/lib/site-content";
 
-export async function SiteHeader({ dark = false }: { dark?: boolean }) {
+export async function SiteHeader({ dark = false, solidWordmark = false }: { dark?: boolean; solidWordmark?: boolean }) {
   const { announcement } = await getWebsiteContent();
   return (
     <>
@@ -15,7 +15,7 @@ export async function SiteHeader({ dark = false }: { dark?: boolean }) {
           <Image src="/images/coastal-route-badge.png" alt="" width={54} height={54} className="h-12 w-12 object-contain" priority />
           <span>
             <span className="block text-[0.67rem] font-extrabold tracking-[0.2em]">COASTAL ROUTE</span>
-            <span className="block text-[0.61rem] tracking-[0.36em] opacity-70">COFFEE</span>
+            <span className={`block text-[0.61rem] tracking-[0.36em]${solidWordmark ? "" : " opacity-70"}`}>COFFEE</span>
           </span>
         </Link>
         <nav aria-label="Main navigation" className="flex items-center gap-4 text-[0.68rem] font-bold tracking-[0.11em] uppercase sm:gap-7">

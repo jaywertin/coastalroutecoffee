@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 export default function OurStoryPage() {
   return (
     <main>
-      <SiteHeader dark />
+      <SiteHeader solidWordmark />
       <section className="grid bg-[#0f1f2e] text-white lg:min-h-[720px] lg:grid-cols-2">
         <div className="flex items-center px-7 py-20 sm:px-14 lg:px-20">
           <div className="max-w-2xl">
