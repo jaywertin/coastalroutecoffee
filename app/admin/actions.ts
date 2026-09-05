@@ -14,11 +14,13 @@ import { getInventorySnapshot, saveInventory, type InventoryItem } from "@/lib/i
 import { getProductCatalog, saveProductCatalog } from "@/lib/product-catalog";
 import { ProductImageError, uploadProductImage } from "@/lib/product-images";
 import {
+  moveProductInCatalog,
   optionIdentity,
   productSizes,
   productSlug,
   purchaseTypes,
   type Product,
+  type ProductMoveDirection,
   type ProductOption,
   type ProductSize,
   type PurchaseType,
@@ -87,6 +89,31 @@ export async function updateInventory(_state: AdminActionState, formData: FormDa
     return { status: "success", message: "Inventory saved. Storefront availability is now up to date." };
   } catch {
     return { status: "error", message: "Inventory could not be saved. Check the Redis configuration and try again." };
+  }
+}
+
+export async function reorderProduct(_state: AdminActionState, formData: FormData): Promise<AdminActionState> {
+  if (!await hasAdminSession()) return { status: "error", message: "Your admin session expired. Sign in again." };
+
+  const productId = textField(formData, "productId", 60);
+  const requestedDirection = formData.get("direction");
+  if (!productId || (requestedDirection !== "up" && requestedDirection !== "down")) {
+    return { status: "error", message: "That product move is not valid." };
+  }
+
+  const direction: ProductMoveDirection = requestedDirection;
+  const catalog = await getProductCatalog();
+  const reordered = moveProductInCatalog(catalog, productId, direction);
+  if (reordered === catalog) return { status: "error", message: "That coffee is already at the end of the list." };
+
+  try {
+    await saveProductCatalog(reordered);
+    revalidatePath("/admin");
+    revalidatePath("/");
+    revalidatePath("/shop");
+    return { status: "success", message: "Product order updated." };
+  } catch {
+    return { status: "error", message: "The product order could not be updated. Check Redis and try again." };
   }
 }
 

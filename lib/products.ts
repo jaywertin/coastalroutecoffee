@@ -83,6 +83,18 @@ export const products = defaultProducts;
 
 export type ResolvedInventoryItem = { inventorySku: string; quantity: number };
 
+export type ProductMoveDirection = "up" | "down";
+
+export function moveProductInCatalog(products: Product[], productId: string, direction: ProductMoveDirection) {
+  const currentIndex = products.findIndex((product) => product.id === productId);
+  const nextIndex = currentIndex + (direction === "up" ? -1 : 1);
+  if (currentIndex < 0 || nextIndex < 0 || nextIndex >= products.length) return products;
+
+  const reordered = [...products];
+  [reordered[currentIndex], reordered[nextIndex]] = [reordered[nextIndex], reordered[currentIndex]];
+  return reordered;
+}
+
 export function formatPrice(price: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0 }).format(price);
 }

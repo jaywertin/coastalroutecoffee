@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { defaultProducts, isAllowedProductImage, isProductCatalog, optionIdentity, productSlug, products } from "./products.ts";
+import { defaultProducts, isAllowedProductImage, isProductCatalog, moveProductInCatalog, optionIdentity, productSlug, products } from "./products.ts";
 
 test("shares physical inventory across purchase types", () => {
   for (const product of products) {
@@ -43,4 +43,13 @@ test("only allows local product assets and public Vercel Blob images", () => {
   assert.equal(isAllowedProductImage("https://store.public.blob.vercel-storage.com/products/coffee.png"), true);
   assert.equal(isAllowedProductImage("https://example.com/coffee.png"), false);
   assert.equal(isAllowedProductImage("/images/../secret.png"), false);
+});
+
+test("moves products without mutating the original catalog", () => {
+  const originalIds = defaultProducts.map((product) => product.id);
+  const reordered = moveProductInCatalog(defaultProducts, "coffee-of-the-month", "up");
+
+  assert.deepEqual(reordered.map((product) => product.id), ["california-blend", "coffee-of-the-month", "fogged-in"]);
+  assert.deepEqual(defaultProducts.map((product) => product.id), originalIds);
+  assert.equal(moveProductInCatalog(reordered, "california-blend", "up"), reordered);
 });
