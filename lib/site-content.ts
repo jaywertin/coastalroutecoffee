@@ -11,6 +11,8 @@ export type WebsiteContent = {
   heroTitle: string;
   heroEmphasis: string;
   heroBody: string;
+  productsEyebrow: string;
+  productsTitle: string;
   featuredEyebrow: string;
   featuredTitle: string;
   featuredBody: string;
@@ -31,6 +33,8 @@ export const defaultWebsiteContent: WebsiteContent = {
   heroTitle: "The Road to",
   heroEmphasis: "Better Coffee.",
   heroBody: "Thoughtfully roasted whole-bean coffee inspired by the wild coast and the roads worth taking your time to travel.",
+  productsEyebrow: "Choose your route",
+  productsTitle: "Coffee for Every Route.",
   featuredEyebrow: "Coffee of the Month",
   featuredTitle: "A new route every month.",
   featuredBody: "Discover a rotating 12-ounce whole-bean coffee selected by the roaster and delivered monthly for $20.",

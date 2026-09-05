@@ -219,6 +219,8 @@ const contentLimits: Record<keyof WebsiteContent, number> = {
   heroTitle: 80,
   heroEmphasis: 80,
   heroBody: 240,
+  productsEyebrow: 80,
+  productsTitle: 100,
   featuredEyebrow: 80,
   featuredTitle: 100,
   featuredBody: 260,

@@ -89,6 +89,7 @@ const contentSections: Array<{
 }> = [
   { title: "Announcement bar", description: "The slim message shown above the main navigation on every page.", fields: [{ key: "announcement", label: "Announcement" }] },
   { title: "Homepage hero", description: "The first message visitors see over the coastal photograph.", fields: [{ key: "heroEyebrow", label: "Eyebrow" }, { key: "heroTitle", label: "Headline" }, { key: "heroEmphasis", label: "Emphasized headline" }, { key: "heroBody", label: "Introduction", multiline: true }] },
+  { title: "Homepage product section", description: "The heading above the coffee cards on the homepage.", fields: [{ key: "productsEyebrow", label: "Eyebrow" }, { key: "productsTitle", label: "Headline" }] },
   { title: "Featured subscription", description: "Copy beside the Coffee of the Month feature.", fields: [{ key: "featuredEyebrow", label: "Eyebrow" }, { key: "featuredTitle", label: "Headline" }, { key: "featuredBody", label: "Description", multiline: true }] },
   { title: "Brand story", description: "The editorial statement above the Our Story link.", fields: [{ key: "storyEyebrow", label: "Eyebrow" }, { key: "storyIntro", label: "Introduction", multiline: true }, { key: "storyQuote", label: "Quote", multiline: true }] },
   { title: "Local delivery", description: "The closing homepage callout for South Orange County.", fields: [{ key: "localEyebrow", label: "Eyebrow" }, { key: "localTitle", label: "Headline" }, { key: "localBody", label: "Description", multiline: true }] },

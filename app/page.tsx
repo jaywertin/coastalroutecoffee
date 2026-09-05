@@ -42,7 +42,7 @@ export default async function Home() {
       <section className="px-6 py-24 sm:py-32 lg:px-10">
         <div className="mx-auto max-w-7xl">
           <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
-            <div><p className="eyebrow text-[#9b6a2d]">Choose your route</p><h2 className="font-display mt-4 max-w-2xl text-5xl leading-[0.95] tracking-[-0.035em] sm:text-6xl">Coffee for Every Route.</h2></div>
+            <div><p className="eyebrow text-[#9b6a2d]">{content.productsEyebrow}</p><h2 className="font-display mt-4 max-w-2xl text-5xl leading-[0.95] tracking-[-0.035em] sm:text-6xl">{content.productsTitle}</h2></div>
             <Link href="/shop" className="text-xs font-extrabold tracking-[0.12em] uppercase">Shop all coffee <span className="ml-2" aria-hidden="true">→</span></Link>
           </div>
           <div className="mt-14 grid gap-6 md:grid-cols-3">
