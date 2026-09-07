@@ -1,6 +1,7 @@
 import type { ShippoLabel, ShippoRecipient } from "@/lib/shippo";
 import { getCommerceMode } from "@/lib/commerce";
 import { FulfillmentConfigurationError } from "@/lib/fulfillment-store";
+import { formatOrderNumber } from "@/lib/order-number-utils";
 import { CUSTOMER_PORTAL_URL, WEBSITE_URL } from "@/lib/site";
 
 const MERCHANT_EMAIL = "coastalroutecoffee@gmail.com";
@@ -191,6 +192,7 @@ export async function sendContactEmails({
 
 export async function sendOrderEmails({
   orderId,
+  orderNumber,
   customerEmail,
   address,
   items,
@@ -198,6 +200,7 @@ export async function sendOrderEmails({
   labels,
 }: {
   orderId: string;
+  orderNumber: number;
   customerEmail: string;
   address: ShippoRecipient;
   items: Array<{ name: string; quantity: number }>;
@@ -226,12 +229,13 @@ export async function sendOrderEmails({
       )).join("")
     : "<li>No carrier tracking is needed for free local delivery.</li>";
   const includesSubscription = items.some(({ name }) => /monthly|subscription/i.test(name));
+  const displayOrderNumber = formatOrderNumber(orderNumber);
 
   const deliveries = [sendEmail({
     apiKey,
     from,
     to: process.env.FULFILLMENT_EMAIL_TO ?? MERCHANT_EMAIL,
-    subject: `${modePrefix}New Coastal Route Coffee order — ${orderId}`,
+    subject: `${modePrefix}New Coastal Route Coffee order ${displayOrderNumber}`,
     idempotencyKey: `crc-${mode}-merchant-${orderId}`,
     html: brandedEmail({
       eyebrow: mode === "sandbox" ? "Sandbox fulfillment" : "New order",
@@ -240,7 +244,7 @@ export async function sendOrderEmails({
       ctaLabel: "Open the storefront",
       content: `
         <div style="border-top:1px solid #e6ddce;border-bottom:1px solid #e6ddce;padding:22px 0;color:#334955;font-size:14px;line-height:1.7;">
-          <p style="margin:0 0 8px;"><strong>Order:</strong> ${escapeHtml(orderId)}</p>
+          <p style="margin:0 0 8px;"><strong>Order:</strong> ${displayOrderNumber}</p>
           <p style="margin:0 0 8px;"><strong>Customer email:</strong> ${escapeHtml(customerEmail)}</p>
           <p style="margin:0;"><strong>Delivery:</strong> ${escapeHtml(delivery)}</p>
         </div>
@@ -257,7 +261,7 @@ export async function sendOrderEmails({
       apiKey,
       from,
       to: customerEmail,
-      subject: `${modePrefix}Your Coastal Route Coffee order is confirmed`,
+      subject: `${modePrefix}Your Coastal Route Coffee order ${displayOrderNumber} is confirmed`,
       idempotencyKey: `crc-${mode}-customer-${orderId}`,
       html: brandedEmail({
         eyebrow: mode === "sandbox" ? "Sandbox order confirmed" : "Order confirmed",
@@ -265,6 +269,7 @@ export async function sendOrderEmails({
         introduction: "Thank you for choosing Coastal Route Coffee. We’re grateful to be part of your daily ritual. Your order is confirmed, and we’ll prepare your coffee with care.",
         ctaLabel: "Continue your route",
         content: `
+          <p style="margin:0 0 20px;padding:16px 18px;background:#f4eee2;border-radius:12px;color:#334955;"><strong>Order:</strong> ${displayOrderNumber}</p>
           <h2 style="margin:0 0 10px;font-family:Georgia,'Times New Roman',serif;font-size:22px;">Your coffee</h2><ul style="padding-left:20px;color:#334955;line-height:1.7;">${itemRows}</ul>
           <p style="margin:20px 0;padding:16px 18px;background:#f4eee2;border-radius:12px;color:#334955;"><strong>Delivery:</strong> ${escapeHtml(delivery)}</p>
           <h2 style="margin:26px 0 10px;font-family:Georgia,'Times New Roman',serif;font-size:22px;">Deliver to</h2><p style="margin:0;color:#334955;line-height:1.7;">${addressHtml(address)}</p>

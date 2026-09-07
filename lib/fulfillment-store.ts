@@ -1,5 +1,7 @@
 import "server-only";
 
+import { FIRST_ORDER_NUMBER } from "@/lib/order-number-utils";
+
 type RedisResponse<T> = { result?: T; error?: string };
 
 export class FulfillmentConfigurationError extends Error {
@@ -31,6 +33,30 @@ export async function redisCommand<T>(...args: Array<string | number>) {
   const data = await response.json().catch(() => ({})) as RedisResponse<T>;
   if (!response.ok || data.error) throw new Error("Fulfillment storage request failed.");
   return data.result;
+}
+
+export async function getOrCreateOrderNumber(mode: "sandbox" | "live", sourceId: string) {
+  const script = [
+    "local existing = redis.call('GET', KEYS[1])",
+    "if existing then return existing end",
+    "if redis.call('EXISTS', KEYS[2]) == 0 then redis.call('SET', KEYS[2], ARGV[1]) end",
+    "local assigned = redis.call('INCR', KEYS[2])",
+    "redis.call('SET', KEYS[1], assigned)",
+    "return assigned",
+  ].join(" ");
+  const result = await redisCommand<string | number>(
+    "EVAL",
+    script,
+    2,
+    `order-number:${mode}:${sourceId}`,
+    `order-number:${mode}:last`,
+    FIRST_ORDER_NUMBER - 1,
+  );
+  const orderNumber = Number(result);
+  if (!Number.isSafeInteger(orderNumber) || orderNumber < FIRST_ORDER_NUMBER) {
+    throw new FulfillmentConfigurationError("Order numbering could not be allocated.");
+  }
+  return orderNumber;
 }
 
 export async function acquireFulfillmentLock(orderId: string) {

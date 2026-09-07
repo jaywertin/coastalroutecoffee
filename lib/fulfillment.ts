@@ -5,6 +5,7 @@ import {
   acquireFulfillmentLock,
   completeFulfillment,
   getFulfillmentProgress,
+  getOrCreateOrderNumber,
   releaseFulfillmentLock,
   saveFulfillmentProgress,
 } from "@/lib/fulfillment-store";
@@ -73,6 +74,7 @@ export async function fulfillCheckoutSession(session: Stripe.Checkout.Session) {
   }
 
   try {
+    const orderNumber = await getOrCreateOrderNumber(mode, session.id);
     const stripe = getStripe();
     const lineItems = await stripe.checkout.sessions.listLineItems(session.id, {
       limit: 100,
@@ -146,6 +148,7 @@ export async function fulfillCheckoutSession(session: Stripe.Checkout.Session) {
       ? "Free local delivery"
       : `${session.metadata?.shippingCarrier ?? "Carrier"} ${session.metadata?.shippingService ?? "shipping"}`;
     const result = {
+      orderNumber,
       delivery,
       labels: labels.map(({ transactionId, labelUrl, trackingNumber, trackingUrl }) => ({
         transactionId,
@@ -159,6 +162,7 @@ export async function fulfillCheckoutSession(session: Stripe.Checkout.Session) {
     try {
       await sendOrderEmails({
         orderId: session.id,
+        orderNumber,
         customerEmail: session.customer_details?.email ?? "Not supplied",
         address,
         items: resolvedItems.map(({ product, option, quantity }) => ({
@@ -177,6 +181,7 @@ export async function fulfillCheckoutSession(session: Stripe.Checkout.Session) {
 
     console.info(`Stripe ${mode} order fulfilled`, {
       sessionId: session.id,
+      orderNumber,
       deliveryType: localDelivery ? "local" : "carrier",
       labelCount: labels.length,
     });
@@ -228,6 +233,7 @@ export async function fulfillSubscriptionRenewal(invoice: Stripe.Invoice) {
   }
 
   try {
+    const orderNumber = await getOrCreateOrderNumber(mode, invoice.id);
     const stripe = getStripe();
     if (typeof invoice.customer !== "string") throw new Error("The renewal invoice is missing its customer.");
     const customer = await stripe.customers.retrieve(invoice.customer);
@@ -257,6 +263,7 @@ export async function fulfillSubscriptionRenewal(invoice: Stripe.Invoice) {
       ? "Free local delivery"
       : `${metadata.shippingCarrier ?? "Carrier"} ${metadata.shippingService ?? "shipping"}`;
     await completeFulfillment(invoice.id, {
+      orderNumber,
       delivery,
       labels: labels.map(({ transactionId, labelUrl, trackingNumber, trackingUrl }) => ({
         transactionId,
@@ -269,6 +276,7 @@ export async function fulfillSubscriptionRenewal(invoice: Stripe.Invoice) {
     try {
       await sendOrderEmails({
         orderId: invoice.id,
+        orderNumber,
         customerEmail: customer.email ?? invoice.customer_email ?? "Not supplied",
         address,
         items: [{ name: "Monthly coffee subscription renewal", quantity: parcels.length }],
@@ -283,6 +291,7 @@ export async function fulfillSubscriptionRenewal(invoice: Stripe.Invoice) {
     }
     console.info(`Stripe ${mode} renewal fulfilled`, {
       invoiceId: invoice.id,
+      orderNumber,
       deliveryType: localDelivery ? "local" : "carrier",
       labelCount: labels.length,
     });
