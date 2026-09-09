@@ -17,7 +17,7 @@ export default async function Home() {
       <section className="relative min-h-[820px] bg-[#0f1f2e] text-white">
         <Image src="/images/coastal-hero.png" alt="Coffee beside a winding road overlooking the California coast" fill priority className="object-cover object-[62%_center]" sizes="100vw" />
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(8,20,30,.92)_0%,rgba(8,20,30,.68)_44%,rgba(8,20,30,.12)_80%)]" />
-        <div className="relative z-10"><SiteHeader dark /></div>
+        <div className="relative z-10"><SiteHeader dark largeBrand /></div>
         <div className="relative z-10 mx-auto flex min-h-[690px] max-w-7xl items-center px-6 pb-16 lg:px-10">
           <div className="max-w-2xl pt-8">
             <p className="eyebrow mb-6 text-[#e2b45d]">{content.heroEyebrow}</p>

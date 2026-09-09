@@ -3,7 +3,7 @@ import Link from "next/link";
 import { CUSTOMER_PORTAL_URL } from "@/lib/site";
 import { getWebsiteContent } from "@/lib/site-content";
 
-export async function SiteHeader({ dark = false, solidWordmark = false }: { dark?: boolean; solidWordmark?: boolean }) {
+export async function SiteHeader({ dark = false, solidWordmark = false, largeBrand = false }: { dark?: boolean; solidWordmark?: boolean; largeBrand?: boolean }) {
   const { announcement } = await getWebsiteContent();
   return (
     <>
@@ -11,11 +11,11 @@ export async function SiteHeader({ dark = false, solidWordmark = false }: { dark
         {announcement}
       </div>
       <header className={dark ? "site-header site-header-dark" : "site-header"}>
-        <Link href="/" className="flex items-center gap-3" aria-label="Coastal Route Coffee home">
-          <Image src="/images/coastal-route-badge.png" alt="" width={54} height={54} className="h-12 w-12 object-contain" priority />
+        <Link href="/" className={`flex items-center ${largeBrand ? "gap-3.5" : "gap-3"}`} aria-label="Coastal Route Coffee home">
+          <Image src="/images/coastal-route-badge.png" alt="" width={56} height={56} className={`${largeBrand ? "h-14 w-14" : "h-12 w-12"} object-contain`} priority />
           <span>
-            <span className="block text-[0.67rem] font-extrabold tracking-[0.2em]">COASTAL ROUTE</span>
-            <span className={`block text-[0.61rem] tracking-[0.36em]${solidWordmark ? "" : " opacity-70"}`}>COFFEE</span>
+            <span className={`block font-extrabold tracking-[0.2em] ${largeBrand ? "text-[0.75rem]" : "text-[0.67rem]"}`}>COASTAL ROUTE</span>
+            <span className={`block tracking-[0.36em] ${largeBrand ? "text-[0.68rem]" : "text-[0.61rem]"}${solidWordmark ? "" : " opacity-70"}`}>COFFEE</span>
           </span>
         </Link>
         <nav aria-label="Main navigation" className="flex items-center gap-4 text-[0.68rem] font-bold tracking-[0.11em] uppercase sm:gap-7">
