@@ -258,8 +258,8 @@ export function Storefront({ products, commerceMode, inventory }: { products: Pr
 
       {isCartOpen ? (
         <div className="fixed inset-0 z-50 bg-[#08121a]/55" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setCartOpen(false); }}>
-          <aside className="ml-auto flex h-full w-full max-w-md flex-col bg-[#fffdf8] p-6 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="cart-heading">
-            <div className="flex items-center justify-between border-b border-[#102638]/10 pb-5">
+          <aside className="ml-auto flex h-dvh w-full max-w-md flex-col overflow-hidden bg-[#fffdf8] p-6 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="cart-heading">
+            <div className="flex shrink-0 items-center justify-between border-b border-[#102638]/10 pb-5">
               <div>
                 <p className="eyebrow text-[#9b6a2d]">Your route</p>
                 <h2 id="cart-heading" className="font-display mt-1 text-3xl">Cart</h2>
@@ -267,7 +267,7 @@ export function Storefront({ products, commerceMode, inventory }: { products: Pr
               <button type="button" className="h-11 w-11 rounded-full border border-[#102638]/15 text-xl" onClick={() => setCartOpen(false)} aria-label="Close cart">×</button>
             </div>
 
-            <div className="flex-1 overflow-y-auto py-4">
+            <div className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain py-4 [-webkit-overflow-scrolling:touch]">
               {cart.length ? cart.map((item) => (
                 <div key={item.key} className="grid grid-cols-[4.5rem_1fr] gap-4 border-b border-[#102638]/10 py-4">
                   <div className="relative h-[4.5rem] overflow-hidden rounded-xl bg-[#e8dfcf]">
@@ -286,9 +286,8 @@ export function Storefront({ products, commerceMode, inventory }: { products: Pr
                   </div>
                 </div>
               )) : <p className="py-12 text-center text-sm text-[#102638]/55">Your cart is ready for a little adventure.</p>}
-            </div>
 
-            <div className="border-t border-[#102638]/10 pt-5">
+              <div className="border-t border-[#102638]/10 pt-5">
               <div className="rounded-2xl border border-[#102638]/10 bg-[#f6f0e5] p-4">
                 <label htmlFor="delivery-zip" className="block text-[0.67rem] font-extrabold tracking-[0.12em] uppercase">Delivery ZIP code</label>
                 <input
@@ -376,6 +375,7 @@ export function Storefront({ products, commerceMode, inventory }: { products: Pr
               >
                 {isCheckingOut ? "Opening Stripe…" : isCompleteZip && !isEligibleZip && !selectedShippingQuote ? "Select a shipping rate" : `Continue to secure${isSandbox ? " test" : ""} checkout`}
               </button>
+              </div>
             </div>
           </aside>
         </div>
