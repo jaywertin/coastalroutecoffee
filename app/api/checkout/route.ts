@@ -7,6 +7,7 @@ import { getStripe } from "@/lib/stripe";
 import { FULFILLMENT_VERSION } from "@/lib/fulfillment";
 import { enforceRateLimit, enforceSameOrigin, HttpRequestError, readLimitedJson } from "@/lib/http-security";
 import { getApplicationUrl } from "@/lib/site";
+import { CHECKOUT_FIRST_FULFILLMENT } from "@/lib/subscription-fulfillment-utils";
 import { assertInventoryAvailable, InventoryUnavailableError } from "@/lib/inventory";
 import { getPublicProducts } from "@/lib/product-catalog";
 
@@ -73,6 +74,7 @@ export async function POST(request: Request) {
     }, new Map<string, number>())).map(([sku, quantity]) => ({ sku, quantity }));
     const orderMetadata = {
       fulfillmentVersion: FULFILLMENT_VERSION,
+      firstFulfillment: CHECKOUT_FIRST_FULFILLMENT,
       checkoutPhase: isLocalDelivery ? `local-delivery-${commerceMode}` : `shippo-shipping-${commerceMode}`,
       deliveryZip,
       shippingType: isLocalDelivery ? "local" : "carrier",

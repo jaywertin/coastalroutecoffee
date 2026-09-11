@@ -15,6 +15,7 @@ import { createShippoLabels, type ShippoRecipient } from "@/lib/shippo";
 import { getStripe } from "@/lib/stripe";
 import { commitInventorySale } from "@/lib/inventory";
 import { getProductCatalog } from "@/lib/product-catalog";
+import { shouldFulfillSubscriptionInvoice } from "@/lib/subscription-fulfillment-utils";
 
 const FULFILLMENT_VERSION = `${getCommerceMode()}-v1`;
 
@@ -222,9 +223,10 @@ function parseRenewalInventory(value: string | undefined) {
 
 export async function fulfillSubscriptionRenewal(invoice: Stripe.Invoice) {
   const mode = getCommerceMode();
-  if (invoice.livemode !== isLiveCommerce() || invoice.billing_reason !== "subscription_cycle") return;
+  if (invoice.livemode !== isLiveCommerce()) return;
   const metadata = invoice.parent?.subscription_details?.metadata;
   if (metadata?.fulfillmentVersion !== FULFILLMENT_VERSION) return;
+  if (!shouldFulfillSubscriptionInvoice(invoice.billing_reason, metadata)) return;
 
   const acquired = await acquireFulfillmentLock(invoice.id);
   if (!acquired) {
