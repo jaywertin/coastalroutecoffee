@@ -15,7 +15,10 @@ import { createShippoLabels, type ShippoRecipient } from "@/lib/shippo";
 import { getStripe } from "@/lib/stripe";
 import { commitInventorySale } from "@/lib/inventory";
 import { getProductCatalog } from "@/lib/product-catalog";
-import { shouldFulfillSubscriptionInvoice } from "@/lib/subscription-fulfillment-utils";
+import {
+  resolveSubscriptionDeliveryAddress,
+  shouldFulfillSubscriptionInvoice,
+} from "@/lib/subscription-fulfillment-utils";
 
 const FULFILLMENT_VERSION = `${getCommerceMode()}-v1`;
 
@@ -41,25 +44,6 @@ function getShippingAddress(session: Stripe.Checkout.Session): ShippoRecipient {
     country: "US",
     ...(session.customer_details?.phone ? { phone: session.customer_details.phone } : {}),
     ...(session.customer_details?.email ? { email: session.customer_details.email } : {}),
-  };
-}
-
-function getCustomerShippingAddress(customer: Stripe.Customer): ShippoRecipient {
-  const shipping = customer.shipping;
-  const address = shipping?.address;
-  if (!shipping?.name || !address?.line1 || !address.city || !address.state || !address.postal_code || address.country !== "US") {
-    throw new Error("The subscription customer does not have a complete United States shipping address.");
-  }
-  return {
-    name: shipping.name,
-    street1: address.line1,
-    ...(address.line2 ? { street2: address.line2 } : {}),
-    city: address.city,
-    state: address.state,
-    zip: address.postal_code,
-    country: "US",
-    ...(shipping.phone ? { phone: shipping.phone } : {}),
-    ...(customer.email ? { email: customer.email } : {}),
   };
 }
 
@@ -240,7 +224,7 @@ export async function fulfillSubscriptionRenewal(invoice: Stripe.Invoice) {
     if (typeof invoice.customer !== "string") throw new Error("The renewal invoice is missing its customer.");
     const customer = await stripe.customers.retrieve(invoice.customer);
     if (customer.deleted) throw new Error("The renewal customer was deleted.");
-    const address = getCustomerShippingAddress(customer);
+    const address: ShippoRecipient = resolveSubscriptionDeliveryAddress(customer);
     const parcels = parseRenewalParcels(metadata.parcels);
     const inventoryItems = parseRenewalInventory(metadata.inventoryItems);
     const localDelivery = metadata.shippingType === "local" && isLocalDeliveryZip(address.zip.slice(0, 5));
