@@ -34,7 +34,7 @@ export default async function ShopPage() {
       </section>
       <section className="border-y border-[#102638]/10 bg-[#fffdf8] px-6 py-10 lg:px-10">
         <div className="mx-auto grid max-w-7xl gap-6 text-center sm:grid-cols-3">
-          {["Cancel anytime; email us to pause", "Free local delivery in eligible ZIP codes", "United States delivery only"].map((item) => <p key={item} className="text-xs font-bold tracking-[0.08em] uppercase">{item}</p>)}
+          {["Manage or cancel anytime through the customer portal", "Free local delivery in eligible ZIP codes", "United States delivery only"].map((item) => <p key={item} className="text-xs font-bold tracking-[0.08em] uppercase">{item}</p>)}
         </div>
       </section>
       <SiteFooter />

@@ -67,7 +67,7 @@ function ProductCard({ product, inventory, onAdd }: { product: Product; inventor
           </div>
         </fieldset>
 
-        <p className="mt-4 text-xs text-[#102638]/52">{selectedInventory?.lowStock ? `Only ${selectedInventory.quantity} left · ` : "Whole bean · "}{selected.purchaseType === "subscription" ? "Cancel anytime; email us to pause" : "Single purchase"}</p>
+        <p className="mt-4 text-xs text-[#102638]/52">{selectedInventory?.lowStock ? `Only ${selectedInventory.quantity} left · ` : "Whole bean · "}{selected.purchaseType === "subscription" ? "Manage or cancel anytime through the customer portal" : "Single purchase"}</p>
         <button type="button" disabled={!available} className="mt-5 w-full rounded-full bg-[#102638] px-5 py-4 text-xs font-extrabold tracking-[0.13em] text-white uppercase transition enabled:hover:-translate-y-0.5 enabled:hover:bg-[#17364f] disabled:cursor-not-allowed disabled:bg-[#102638]/35" onClick={() => onAdd(product, selected)}>
           {available ? `Add to cart · ${formatPrice(selected.price)}` : "Sold out"}
         </button>
