@@ -8,6 +8,7 @@ import {
   notifyScheduledSubscriptionCancellation,
 } from "@/lib/subscription-cancellation";
 import { isNewScheduledCancellation } from "@/lib/subscription-cancellation-utils";
+import { recordCompletedOrder } from "@/lib/analytics";
 
 export const runtime = "nodejs";
 
@@ -72,7 +73,13 @@ export async function POST(request: Request) {
 
   try {
     if (event.type === "checkout.session.completed" || event.type === "checkout.session.async_payment_succeeded") {
-      await fulfillCheckoutSession(event.data.object as Stripe.Checkout.Session);
+      const session = event.data.object as Stripe.Checkout.Session;
+      await fulfillCheckoutSession(session);
+      try {
+        await recordCompletedOrder({ mode, sessionId: session.id, amountTotal: session.amount_total });
+      } catch {
+        console.warn("Completed-order analytics could not be recorded", { sessionId: session.id });
+      }
     }
     if (event.type === "invoice.paid") {
       await fulfillSubscriptionRenewal(event.data.object as Stripe.Invoice);

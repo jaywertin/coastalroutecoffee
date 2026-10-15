@@ -10,6 +10,7 @@ import { getApplicationUrl } from "@/lib/site";
 import { CHECKOUT_FIRST_FULFILLMENT } from "@/lib/subscription-fulfillment-utils";
 import { assertInventoryAvailable, InventoryUnavailableError } from "@/lib/inventory";
 import { getPublicProducts } from "@/lib/product-catalog";
+import { recordCheckoutStarted } from "@/lib/analytics";
 
 export const runtime = "nodejs";
 
@@ -170,6 +171,15 @@ export async function POST(request: Request) {
 
     if (!session.url) {
       return Response.json({ error: "Stripe did not return a checkout address." }, { status: 502 });
+    }
+
+    try {
+      await recordCheckoutStarted({
+        mode: commerceMode,
+        items: resolvedItems.map(({ product, quantity }) => ({ productId: product.id, quantity })),
+      });
+    } catch {
+      console.warn("Checkout analytics could not be recorded", { sessionId: session.id });
     }
 
     return Response.json({ url: session.url }, { headers: { "Cache-Control": "no-store" } });

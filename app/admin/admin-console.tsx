@@ -4,11 +4,14 @@ import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { updateInventory, updateWebsiteContent, type AdminActionState } from "@/app/admin/actions";
 import { ProductsEditor } from "@/app/admin/products-editor";
+import { AnalyticsPanel } from "@/app/admin/analytics-panel";
+import type { AnalyticsSnapshot } from "@/lib/analytics-utils";
+import type { CommerceMode } from "@/lib/commerce";
 import type { InventoryItem } from "@/lib/inventory";
 import type { Product } from "@/lib/products";
 import type { WebsiteContent } from "@/lib/site-content";
 
-type Section = "products" | "inventory" | "content";
+type Section = "analytics" | "products" | "inventory" | "content";
 const initialAdminActionState: AdminActionState = { status: "idle", message: "" };
 
 function SaveButton({ children }: { children: string }) {
@@ -126,14 +129,14 @@ function ContentEditor({ content }: { content: WebsiteContent }) {
   );
 }
 
-export function AdminConsole({ products, inventory, content, storageAvailable, imageUploadsAvailable }: { products: Product[]; inventory: InventoryItem[]; content: WebsiteContent; storageAvailable: boolean; imageUploadsAvailable: boolean }) {
-  const [section, setSection] = useState<Section>("products");
+export function AdminConsole({ products, inventory, content, analytics, commerceMode, storageAvailable, imageUploadsAvailable }: { products: Product[]; inventory: InventoryItem[]; content: WebsiteContent; analytics: AnalyticsSnapshot; commerceMode: CommerceMode; storageAvailable: boolean; imageUploadsAvailable: boolean }) {
+  const [section, setSection] = useState<Section>("analytics");
   return (
     <div className="grid gap-8 lg:grid-cols-[14rem_1fr]">
       <nav aria-label="Admin sections" className="h-fit rounded-3xl border border-[#102638]/10 bg-[#fffdf8] p-3 lg:sticky lg:top-6">
-        {(["products", "inventory", "content"] as Section[]).map((item) => (
+        {(["analytics", "products", "inventory", "content"] as Section[]).map((item) => (
           <button key={item} type="button" onClick={() => setSection(item)} aria-current={section === item ? "page" : undefined} className="flex min-h-12 w-full items-center justify-between rounded-2xl px-4 text-left text-xs font-extrabold tracking-[0.12em] uppercase data-[active=true]:bg-[#102638] data-[active=true]:text-white" data-active={section === item}>
-            {item === "products" ? "Products" : item === "inventory" ? "Inventory" : "Website copy"}<span aria-hidden="true">→</span>
+            {item === "analytics" ? "Analytics" : item === "products" ? "Products" : item === "inventory" ? "Inventory" : "Website copy"}<span aria-hidden="true">→</span>
           </button>
         ))}
         <a href="/" target="_blank" rel="noreferrer" className="mt-3 flex min-h-12 items-center justify-between rounded-2xl px-4 text-xs font-extrabold tracking-[0.12em] text-[#102638] uppercase transition-colors hover:bg-[#102638]/6">
@@ -141,7 +144,7 @@ export function AdminConsole({ products, inventory, content, storageAvailable, i
         </a>
       </nav>
       <div className="min-w-0 rounded-[2rem] border border-[#102638]/10 bg-[#fffdf8] p-5 shadow-[0_24px_70px_rgba(15,31,46,0.06)] sm:p-8 lg:p-10">
-        {section === "products" ? <ProductsEditor products={products} storageAvailable={storageAvailable} imageUploadsAvailable={imageUploadsAvailable} /> : section === "inventory" ? <InventoryEditor inventory={inventory} storageAvailable={storageAvailable} /> : <ContentEditor content={content} />}
+        {section === "analytics" ? <AnalyticsPanel analytics={analytics} products={products} commerceMode={commerceMode} /> : section === "products" ? <ProductsEditor products={products} storageAvailable={storageAvailable} imageUploadsAvailable={imageUploadsAvailable} /> : section === "inventory" ? <InventoryEditor inventory={inventory} storageAvailable={storageAvailable} /> : <ContentEditor content={content} />}
       </div>
     </div>
   );

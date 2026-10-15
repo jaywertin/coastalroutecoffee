@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { AnalyticsTracker } from "@/app/_components/analytics-tracker";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -14,7 +15,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" data-scroll-behavior="smooth">
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        {children}
+        <AnalyticsTracker />
+      </body>
     </html>
   );
 }

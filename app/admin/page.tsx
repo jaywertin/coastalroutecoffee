@@ -8,6 +8,8 @@ import { getInventorySnapshot } from "@/lib/inventory";
 import { getProductCatalogSnapshot } from "@/lib/product-catalog";
 import { productImageUploadsConfigured } from "@/lib/product-images";
 import { getWebsiteContent } from "@/lib/site-content";
+import { getAnalyticsSnapshot } from "@/lib/analytics";
+import { getCommerceMode } from "@/lib/commerce";
 import { AdminConsole } from "./admin-console";
 
 export const metadata: Metadata = { title: "Roastery admin | Coastal Route Coffee", robots: { index: false, follow: false } };
@@ -15,8 +17,8 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
   if (!await hasAdminSession()) redirect("/admin/login");
-  const catalog = await getProductCatalogSnapshot();
-  const [{ items: inventory, storageAvailable }, content] = await Promise.all([getInventorySnapshot(catalog.products), getWebsiteContent()]);
+  const [catalog, content, analytics] = await Promise.all([getProductCatalogSnapshot(), getWebsiteContent(), getAnalyticsSnapshot()]);
+  const { items: inventory, storageAvailable } = await getInventorySnapshot(catalog.products);
   const tracked = inventory.filter((item) => item.quantity !== null);
   const totalOnHand = tracked.reduce((total, item) => total + (item.quantity ?? 0), 0);
   const lowStock = tracked.filter((item) => item.quantity! <= item.lowStockThreshold).length;
@@ -35,7 +37,7 @@ export default async function AdminPage() {
           <div className="rounded-3xl bg-[#d5a04d] p-6"><p className="text-[0.64rem] font-bold tracking-[0.14em] text-[#102638]/55 uppercase">Needs attention</p><p className="font-display mt-3 text-5xl">{lowStock}</p><p className="mt-1 text-xs text-[#102638]/55">low or out-of-stock SKUs</p></div>
           <div className="rounded-3xl border border-[#102638]/10 bg-[#fffdf8] p-6"><p className="text-[0.64rem] font-bold tracking-[0.14em] text-[#102638]/48 uppercase">Store status</p><p className="font-display mt-3 text-3xl">{storageAvailable ? "Connected" : "Setup needed"}</p><p className="mt-2 text-xs text-[#102638]/48">{storageAvailable ? "Redis persistence is available" : "Using read-only defaults"}</p></div>
         </section>
-        <AdminConsole products={catalog.products} inventory={inventory} content={content} storageAvailable={storageAvailable && catalog.storageAvailable} imageUploadsAvailable={productImageUploadsConfigured()} />
+        <AdminConsole products={catalog.products} inventory={inventory} content={content} analytics={analytics} commerceMode={getCommerceMode()} storageAvailable={storageAvailable && catalog.storageAvailable} imageUploadsAvailable={productImageUploadsConfigured()} />
       </div>
     </main>
   );

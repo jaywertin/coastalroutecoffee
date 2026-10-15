@@ -6,6 +6,7 @@ import { formatPrice, type Product, type ProductOption } from "@/lib/products";
 import { formatShippingService, isLocalDeliveryZip, type ShippingQuote } from "@/lib/shipping";
 import type { CommerceMode } from "@/lib/commerce";
 import type { PublicInventoryStatus } from "@/lib/inventory";
+import { sendStoreAnalytics } from "@/lib/client-analytics";
 
 type CartItem = {
   key: string;
@@ -141,6 +142,7 @@ export function Storefront({ products, commerceMode, inventory }: { products: Pr
     });
     clearShippingSelection();
     setCartOpen(true);
+    sendStoreAnalytics({ type: "add_to_cart", productId: product.id });
   }
 
   function updateQuantity(key: string, quantity: number) {

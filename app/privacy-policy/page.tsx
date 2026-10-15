@@ -37,7 +37,7 @@ const californiaCategories = [
   ["C. Protected classifications", "Gender and date of birth", "No"],
   ["D. Commercial information", "Transaction information, purchase history, financial details and payment information", "Yes"],
   ["E. Biometric information", "Fingerprints and voiceprints", "No"],
-  ["F. Internet or network activity", "Browsing history, search history, online behavior, interest data, and interactions with websites, applications, systems and advertisements", "No"],
+  ["F. Internet or network activity", "Website pages viewed, referring site, browser session activity, cart activity, and checkout activity", "Yes"],
   ["G. Geolocation data", "Device location", "No"],
   ["H. Sensory information", "Images and audio, video or call recordings created in connection with our business activities", "No"],
   ["I. Professional information", "Business contact details, job title, work history and professional qualifications", "No"],
@@ -53,7 +53,7 @@ export default function PrivacyPolicyPage() {
         <article className="mx-auto max-w-4xl">
           <p className="eyebrow text-[#9b6a2d]">Your information</p>
           <h1 className="font-display mt-5 text-6xl leading-[0.92] tracking-[-0.045em] sm:text-7xl">Privacy Policy</h1>
-          <p className="mt-5 text-sm text-[#102638]/55">Last updated August 29, 2026</p>
+          <p className="mt-5 text-sm text-[#102638]/55">Last updated October 15, 2026</p>
 
           <div className="mt-10 space-y-5 text-base leading-7 text-[#102638]/70">
             <p>Thank you for choosing to be part of our community at Coastal Route Coffee (“Company,” “we,” “us,” or “our”). We are committed to protecting your personal information and your right to privacy. If you have questions or concerns about this privacy notice or our practices regarding your personal information, contact us at <a className={linkClass} href="mailto:coastalroutecoffee@gmail.com">coastalroutecoffee@gmail.com</a>.</p>
@@ -113,8 +113,9 @@ export default function PrivacyPolicyPage() {
 
             <section id="section-4" className={sectionClass}>
               <h2 className={headingClass}>4. Do we use cookies and other tracking technologies?</h2>
-              <p className="mt-3"><strong>In short:</strong> We may use cookies and similar technologies to collect and store information.</p>
-              <p className="mt-3">We may use cookies, web beacons, pixels, and similar technologies to access or store information. You can control cookies through your browser settings, although disabling them may affect some Website features.</p>
+              <p className="mt-3"><strong>In short:</strong> We use privacy-focused analytics to understand how the Website is used.</p>
+              <p className="mt-3">We use Vercel Web Analytics, which provides aggregated, anonymous traffic information without third-party cookies. It may record information such as the page viewed, referring website, general location, browser, operating system, and device type.</p>
+              <p className="mt-3">We also keep aggregated Website activity totals, such as page views, visits, products added to a cart, checkout starts, completed orders, and order revenue. A temporary browser-session marker helps count visits. These analytics do not store customer names, email addresses, delivery addresses, payment details, or the contents of individual browsing sessions.</p>
             </section>
 
             <section id="section-5" className={sectionClass}>
