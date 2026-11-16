@@ -35,7 +35,7 @@ export async function ProductDetailPage({ productId }: { productId: FeaturedProd
                 <h1 className="font-display mt-5 text-6xl leading-[0.86] tracking-[-0.045em] sm:text-7xl lg:text-[5.6rem]">{catalogProduct.name}</h1>
                 <p className="mt-6 max-w-md text-base leading-7 text-[#102638]/68">{detail.shortDescription}</p>
               </div>
-              <div className="absolute inset-x-0 top-[15.5rem] bottom-6 sm:top-[14rem] sm:bottom-8 lg:top-[15.5rem]">
+              <div className={`absolute inset-x-0 bottom-6 sm:bottom-8 ${detail.id === "coffee-of-the-month" ? "top-[18rem] sm:top-[20.5rem]" : "top-[15.5rem] sm:top-[14rem] lg:top-[15.5rem]"}`}>
                 <Image src={detail.heroImage} alt={detail.heroImageAlt} fill priority className="object-contain object-center p-2 drop-shadow-[0_28px_22px_rgba(15,31,46,0.16)] sm:p-4" sizes="(max-width: 1024px) 90vw, 560px" />
               </div>
             </div>
