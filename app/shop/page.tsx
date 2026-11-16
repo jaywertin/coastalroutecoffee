@@ -4,6 +4,7 @@ import { SiteHeader } from "@/app/_components/site-header";
 import { getPublicProducts } from "@/lib/product-catalog";
 import { getCommerceMode } from "@/lib/commerce";
 import { getPublicInventory } from "@/lib/inventory";
+import { applyFeaturedProductCopy } from "@/lib/product-details";
 import { getWebsiteContent } from "@/lib/site-content";
 import { Storefront } from "./storefront";
 
@@ -14,7 +15,8 @@ export const metadata: Metadata = {
 
 export default async function ShopPage() {
   const commerceMode = getCommerceMode();
-  const [products, inventory, content] = await Promise.all([getPublicProducts(), getPublicInventory(), getWebsiteContent()]);
+  const [catalogProducts, inventory, content] = await Promise.all([getPublicProducts(), getPublicInventory(), getWebsiteContent()]);
+  const products = catalogProducts.map(applyFeaturedProductCopy);
   return (
     <main>
       <SiteHeader />

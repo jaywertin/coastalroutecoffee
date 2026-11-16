@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { applyFeaturedProductCopy } from "./product-details.ts";
 import { defaultProducts, isAllowedProductImage, isProductCatalog, moveProductInCatalog, optionIdentity, productSlug, products } from "./products.ts";
 
 test("shares physical inventory across purchase types", () => {
@@ -52,4 +53,16 @@ test("moves products without mutating the original catalog", () => {
   assert.deepEqual(reordered.map((product) => product.id), ["california-blend", "coffee-of-the-month", "fogged-in"]);
   assert.deepEqual(defaultProducts.map((product) => product.id), originalIds);
   assert.equal(moveProductInCatalog(reordered, "california-blend", "up"), reordered);
+});
+
+test("keeps featured blend copy consistent with dedicated product pages", () => {
+  const foggedIn = defaultProducts.find((product) => product.id === "fogged-in");
+  assert.ok(foggedIn);
+  const staleCatalogProduct = { ...foggedIn, roast: "Dark roast", notes: "Old notes", description: "Old description" };
+  const featured = applyFeaturedProductCopy(staleCatalogProduct);
+
+  assert.equal(featured.roast, "Medium-dark roast");
+  assert.equal(featured.notes, "Dark chocolate · Rich baking spices");
+  assert.match(featured.description, /smooth finish/);
+  assert.deepEqual(featured.options, staleCatalogProduct.options);
 });

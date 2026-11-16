@@ -6,7 +6,7 @@ import { SiteHeader } from "@/app/_components/site-header";
 import { getCommerceMode } from "@/lib/commerce";
 import { getPublicInventory } from "@/lib/inventory";
 import { getPublicProducts } from "@/lib/product-catalog";
-import { productDetails, type FeaturedProductId } from "@/lib/product-details";
+import { applyFeaturedProductCopy, productDetails, type FeaturedProductId } from "@/lib/product-details";
 import { Storefront } from "../storefront";
 
 export async function ProductDetailPage({ productId }: { productId: FeaturedProductId }) {
@@ -15,13 +15,7 @@ export async function ProductDetailPage({ productId }: { productId: FeaturedProd
   const catalogProduct = products.find((product) => product.id === productId);
   if (!catalogProduct) notFound();
 
-  const product = {
-    ...catalogProduct,
-    roast: detail.roast,
-    notes: detail.notes,
-    description: detail.shortDescription,
-    accent: detail.accent,
-  };
+  const product = applyFeaturedProductCopy(catalogProduct);
 
   return (
     <main>

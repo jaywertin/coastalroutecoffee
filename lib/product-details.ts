@@ -1,3 +1,5 @@
+import type { Product } from "@/lib/products";
+
 export type FeaturedProductId = "california-blend" | "fogged-in";
 
 export type ProductDetail = {
@@ -54,3 +56,15 @@ export const productDetails: Record<FeaturedProductId, ProductDetail> = {
     accentSoft: "#eadbd5",
   },
 };
+
+export function applyFeaturedProductCopy(product: Product): Product {
+  if (product.id !== "california-blend" && product.id !== "fogged-in") return product;
+  const detail = productDetails[product.id];
+  return {
+    ...product,
+    roast: detail.roast,
+    notes: detail.notes,
+    description: detail.shortDescription,
+    accent: detail.accent,
+  };
+}
