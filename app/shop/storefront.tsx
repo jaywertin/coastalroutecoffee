@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { formatPrice, type Product, type ProductOption } from "@/lib/products";
 import { formatShippingService, isLocalDeliveryZip, type ShippingQuote } from "@/lib/shipping";
@@ -21,15 +22,19 @@ function optionLabel(option: ProductOption) {
   return `${option.size} · ${option.purchaseType === "subscription" ? "Monthly" : "One-time"}`;
 }
 
-function ProductCard({ product, inventory, onAdd }: { product: Product; inventory: Record<string, PublicInventoryStatus>; onAdd: (product: Product, option: ProductOption) => void }) {
+function productDetailHref(productId: string) {
+  return productId === "california-blend" || productId === "fogged-in" ? `/shop/${productId}` : null;
+}
+
+function ProductCard({ product, inventory, onAdd, variant = "grid" }: { product: Product; inventory: Record<string, PublicInventoryStatus>; onAdd: (product: Product, option: ProductOption) => void; variant?: "grid" | "detail" }) {
   const [selectedId, setSelectedId] = useState(() => product.options.find((option) => inventory[option.inventorySku]?.available)?.id ?? product.options[0].id);
   const selected = product.options.find((option) => option.id === selectedId) ?? product.options[0];
   const selectedInventory = inventory[selected.inventorySku];
   const available = selectedInventory?.available ?? true;
 
   return (
-    <article className="flex h-full flex-col overflow-hidden rounded-[1.75rem] border border-[#102638]/10 bg-[#fffdf8] shadow-[0_24px_70px_rgba(15,31,46,0.07)]">
-      <div className="relative aspect-[4/4.3] overflow-hidden bg-[#e8dfcf]">
+    <article className={`flex h-full flex-col overflow-hidden rounded-[1.75rem] border border-[#102638]/10 bg-[#fffdf8] shadow-[0_24px_70px_rgba(15,31,46,0.07)] ${variant === "detail" ? "lg:min-h-[38rem]" : ""}`}>
+      {variant === "grid" ? <div className="relative aspect-[4/4.3] overflow-hidden bg-[#e8dfcf]">
         <div className="absolute inset-x-0 top-0 h-2" style={{ backgroundColor: product.accent }} />
         <Image
           src={product.image}
@@ -39,14 +44,22 @@ function ProductCard({ product, inventory, onAdd }: { product: Product; inventor
           sizes="(max-width: 768px) 100vw, 33vw"
         />
         <span className="absolute top-5 left-5 rounded-full bg-[#fffdf8]/92 px-3 py-2 text-[0.62rem] font-extrabold tracking-[0.12em] uppercase">{product.roast}</span>
-      </div>
-      <div className="flex flex-1 flex-col p-6 sm:p-7">
+      </div> : null}
+      <div className={`flex flex-1 flex-col p-6 sm:p-7 ${variant === "detail" ? "sm:p-9" : ""}`}>
+        {variant === "detail" ? <p className="eyebrow mb-6" style={{ color: product.accent }}>{product.roast}</p> : null}
         <div className="flex items-start justify-between gap-5">
-          <h2 className="font-display text-3xl leading-none">{product.name}</h2>
+          <h2 className={`font-display leading-none ${variant === "detail" ? "text-4xl" : "text-3xl"}`}>
+            {productDetailHref(product.id) && variant === "grid" ? <Link href={productDetailHref(product.id)!}>{product.name}</Link> : product.name}
+          </h2>
           <strong className="whitespace-nowrap text-base">{formatPrice(selected.price)}{selected.purchaseType === "subscription" ? "/mo" : ""}</strong>
         </div>
         <p className="mt-3 text-sm font-semibold text-[#9b6a2d]">{product.notes}</p>
         <p className="mt-4 min-h-20 text-sm leading-6 text-[#102638]/62">{product.description}</p>
+        {productDetailHref(product.id) && variant === "grid" ? (
+          <Link className="mt-1 text-xs font-extrabold tracking-[0.11em] text-[#102638] uppercase underline decoration-[#d5a04d] decoration-2 underline-offset-4" href={productDetailHref(product.id)!}>
+            Explore this coffee
+          </Link>
+        ) : null}
 
         <fieldset className="mt-6 flex-1">
           <legend className="mb-3 text-[0.66rem] font-extrabold tracking-[0.14em] uppercase">Choose your coffee</legend>
@@ -77,7 +90,7 @@ function ProductCard({ product, inventory, onAdd }: { product: Product; inventor
   );
 }
 
-export function Storefront({ products, commerceMode, inventory }: { products: Product[]; commerceMode: CommerceMode; inventory: Record<string, PublicInventoryStatus> }) {
+export function Storefront({ products, commerceMode, inventory, variant = "grid" }: { products: Product[]; commerceMode: CommerceMode; inventory: Record<string, PublicInventoryStatus>; variant?: "grid" | "detail" }) {
   const isSandbox = commerceMode === "sandbox";
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setCartOpen] = useState(false);
@@ -248,15 +261,15 @@ export function Storefront({ products, commerceMode, inventory }: { products: Pr
 
   return (
     <>
-      <div className="mb-8 flex justify-end">
+      <div className={`${variant === "detail" ? "mb-4" : "mb-8"} flex justify-end`}>
         <button type="button" className="cart-button" onClick={() => setCartOpen(true)} aria-label={`Open cart with ${itemCount} items`}>
           Cart <span aria-hidden="true">({itemCount})</span>
         </button>
       </div>
-      <div className="grid gap-7 lg:grid-cols-3">
-        {products.map((product) => <ProductCard key={product.id} product={product} inventory={inventory} onAdd={addToCart} />)}
+      <div className={variant === "detail" ? "grid" : "grid gap-7 lg:grid-cols-3"}>
+        {products.map((product) => <ProductCard key={product.id} product={product} inventory={inventory} onAdd={addToCart} variant={variant} />)}
       </div>
-      <p className="mt-8 text-center text-sm text-[#102638]/58" aria-live="polite">{itemCount ? `${itemCount} ${itemCount === 1 ? "item" : "items"} in your cart.` : "Choose a size and purchase type to begin."}</p>
+      <p className={`${variant === "detail" ? "mt-5" : "mt-8"} text-center text-sm text-[#102638]/58`} aria-live="polite">{itemCount ? `${itemCount} ${itemCount === 1 ? "item" : "items"} in your cart.` : "Choose a size and purchase type to begin."}</p>
 
       {isCartOpen ? (
         <div className="fixed inset-0 z-50 bg-[#08121a]/55" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setCartOpen(false); }}>

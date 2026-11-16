@@ -48,9 +48,9 @@ export const defaultProducts: Product[] = [
   {
     id: "fogged-in",
     name: "Fogged In",
-    roast: "Dark roast",
-    notes: "Dark chocolate · Baking spices · Rich finish",
-    description: "Deep, comforting, and full-bodied, with a bold roast profile that stays smooth from the first sip to the last.",
+    roast: "Medium-dark roast",
+    notes: "Dark chocolate · Rich baking spices",
+    description: "Deep and comforting, with a smooth finish inspired by foggy Central Coast mornings that open into sunshine.",
     image: "/images/fogged-in-label.png",
     imageAlt: "Fogged In coffee label",
     accent: "#747675",
