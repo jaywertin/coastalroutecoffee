@@ -28,18 +28,18 @@ export async function ProductDetailPage({ productId }: { productId: FeaturedProd
             <span aria-hidden="true" className="opacity-35">/</span>
             <span>{catalogProduct.name}</span>
           </nav>
-          <div className="grid gap-8 lg:grid-cols-[1.12fr_0.88fr] lg:items-stretch">
+          <div className="grid gap-8 lg:grid-cols-2 lg:items-stretch">
             <div className="relative min-h-[38rem] overflow-hidden rounded-[2rem] bg-[#fffdf8]/55 p-7 shadow-[0_30px_100px_rgba(15,31,46,0.08)] sm:p-10 lg:min-h-0">
               <div className="relative z-10 max-w-xl">
                 <p className="eyebrow" style={{ color: detail.accent }}>{detail.eyebrow}</p>
                 <h1 className="font-display mt-5 text-6xl leading-[0.86] tracking-[-0.045em] sm:text-7xl lg:text-[5.6rem]">{catalogProduct.name}</h1>
                 <p className="mt-6 max-w-md text-base leading-7 text-[#102638]/68">{detail.shortDescription}</p>
               </div>
-              <div className="absolute inset-x-0 bottom-0 h-[23rem] sm:right-5 sm:left-auto sm:h-[31rem] sm:w-[25rem] lg:h-[27rem] lg:w-[21rem] xl:h-[31rem] xl:w-[25rem]">
-                <Image src={detail.heroImage} alt={detail.heroImageAlt} fill priority className="object-contain object-bottom drop-shadow-[0_28px_22px_rgba(15,31,46,0.16)]" sizes="(max-width: 640px) 90vw, 400px" />
+              <div className="absolute inset-x-0 top-[15.5rem] bottom-6 sm:top-[14rem] sm:bottom-8 lg:top-[15.5rem]">
+                <Image src={detail.heroImage} alt={detail.heroImageAlt} fill priority className="object-contain object-center p-2 drop-shadow-[0_28px_22px_rgba(15,31,46,0.16)] sm:p-4" sizes="(max-width: 1024px) 90vw, 560px" />
               </div>
             </div>
-            <div id="purchase" className="scroll-mt-8">
+            <div id="purchase" className="relative h-full scroll-mt-8">
               <Storefront products={[product]} commerceMode={getCommerceMode()} inventory={inventory} variant="detail" />
             </div>
           </div>

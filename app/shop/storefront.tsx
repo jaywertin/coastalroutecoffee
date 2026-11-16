@@ -260,16 +260,16 @@ export function Storefront({ products, commerceMode, inventory, variant = "grid"
   }
 
   return (
-    <>
-      <div className={`${variant === "detail" ? "mb-4" : "mb-8"} flex justify-end`}>
+    <div className={variant === "detail" ? "relative h-full" : ""}>
+      <div className={`${variant === "detail" ? "mb-4 lg:absolute lg:right-0 lg:-top-16 lg:z-10 lg:mb-0" : "mb-8"} flex justify-end`}>
         <button type="button" className="cart-button" onClick={() => setCartOpen(true)} aria-label={`Open cart with ${itemCount} items`}>
           Cart <span aria-hidden="true">({itemCount})</span>
         </button>
       </div>
-      <div className={variant === "detail" ? "grid" : "grid gap-7 lg:grid-cols-3"}>
+      <div className={variant === "detail" ? "grid h-full" : "grid gap-7 lg:grid-cols-3"}>
         {products.map((product) => <ProductCard key={product.id} product={product} inventory={inventory} onAdd={addToCart} variant={variant} />)}
       </div>
-      <p className={`${variant === "detail" ? "mt-5" : "mt-8"} text-center text-sm text-[#102638]/58`} aria-live="polite">{itemCount ? `${itemCount} ${itemCount === 1 ? "item" : "items"} in your cart.` : "Choose a size and purchase type to begin."}</p>
+      <p className={`${variant === "detail" ? "mt-5 lg:absolute lg:inset-x-0 lg:-bottom-10" : "mt-8"} text-center text-sm text-[#102638]/58`} aria-live="polite">{itemCount ? `${itemCount} ${itemCount === 1 ? "item" : "items"} in your cart.` : "Choose a size and purchase type to begin."}</p>
 
       {isCartOpen ? (
         <div className="fixed inset-0 z-50 bg-[#08121a]/55" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setCartOpen(false); }}>
@@ -395,6 +395,6 @@ export function Storefront({ products, commerceMode, inventory, variant = "grid"
           </aside>
         </div>
       ) : null}
-    </>
+    </div>
   );
 }
