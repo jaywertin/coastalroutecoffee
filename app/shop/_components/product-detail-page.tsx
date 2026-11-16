@@ -62,15 +62,15 @@ export async function ProductDetailPage({ productId }: { productId: FeaturedProd
         <div className="mx-auto max-w-7xl">
           <div className="grid gap-10 lg:grid-cols-[0.72fr_1.28fr] lg:items-end lg:gap-24">
             <div>
-              <p className="eyebrow text-[#e2b45d]">Brew it your way</p>
-              <h2 className="font-display mt-5 text-5xl leading-[0.92] tracking-[-0.035em] sm:text-6xl">A blend made to travel</h2>
+              <p className="eyebrow text-[#e2b45d]">{detail.featureEyebrow ?? "Brew it your way"}</p>
+              <h2 className="font-display mt-5 text-5xl leading-[0.92] tracking-[-0.035em] sm:text-6xl">{detail.featureHeading ?? "A blend made to travel"}</h2>
             </div>
             <p className="max-w-2xl text-base leading-7 text-white/65">{detail.brewIntroduction}</p>
           </div>
-          <ul className="mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-5" aria-label="Recommended brewing methods">
+          <ul className={`mt-12 grid gap-3 sm:grid-cols-2 ${detail.brewMethods.length <= 3 ? "lg:grid-cols-3" : "lg:grid-cols-5"}`} aria-label={detail.featureItemLabel ? "Subscription steps" : "Recommended brewing methods"}>
             {detail.brewMethods.map((method, index) => (
               <li key={method} className="flex min-h-28 flex-col justify-between rounded-2xl border border-white/12 bg-white/[0.04] p-5">
-                <span className="text-[0.62rem] font-bold tracking-[0.14em] text-[#e2b45d]">{String(index + 1).padStart(2, "0")}</span>
+                <span className="text-[0.62rem] font-bold tracking-[0.14em] text-[#e2b45d]">{detail.featureItemLabel ? `${detail.featureItemLabel} ${index + 1}` : String(index + 1).padStart(2, "0")}</span>
                 <strong className="mt-6 text-sm tracking-[0.04em]">{method}</strong>
               </li>
             ))}
@@ -80,10 +80,10 @@ export async function ProductDetailPage({ productId }: { productId: FeaturedProd
 
       <section className="border-b border-[#102638]/10 bg-[#f6f0e5] px-6 py-16 lg:px-10 lg:py-20">
         <div className="mx-auto flex max-w-5xl flex-col items-center text-center">
-          <p className="eyebrow" style={{ color: detail.accent }}>Roasted to order in San Clemente</p>
-          <h2 className="font-display mt-5 max-w-3xl text-5xl leading-[0.92] tracking-[-0.035em] sm:text-6xl">Fresh coffee takes the scenic route—not the warehouse route.</h2>
-          <p className="mt-6 max-w-2xl text-base leading-7 text-[#102638]/65">Every bag is roasted to order and shipped whole bean, so the coffee arriving at your door is ready to brew at its best.</p>
-          <a href="#purchase" className="button-dark mt-8">Choose your bag <span aria-hidden="true">↑</span></a>
+          <p className="eyebrow" style={{ color: detail.accent }}>{detail.closingEyebrow ?? "Roasted to order in San Clemente"}</p>
+          <h2 className="font-display mt-5 max-w-3xl text-5xl leading-[0.92] tracking-[-0.035em] sm:text-6xl">{detail.closingHeading ?? "Fresh coffee takes the scenic route—not the warehouse route."}</h2>
+          <p className="mt-6 max-w-2xl text-base leading-7 text-[#102638]/65">{detail.closingDescription ?? "Every bag is roasted to order and shipped whole bean, so the coffee arriving at your door is ready to brew at its best."}</p>
+          <a href="#purchase" className="button-dark mt-8">{detail.closingCta ?? "Choose your bag"} <span aria-hidden="true">↑</span></a>
         </div>
       </section>
       <SiteFooter />

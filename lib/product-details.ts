@@ -1,6 +1,6 @@
 import type { Product } from "@/lib/products";
 
-export type FeaturedProductId = "california-blend" | "fogged-in";
+export type FeaturedProductId = "california-blend" | "fogged-in" | "coffee-of-the-month";
 
 export type ProductDetail = {
   id: FeaturedProductId;
@@ -12,6 +12,13 @@ export type ProductDetail = {
   story: string[];
   brewIntroduction: string;
   brewMethods: string[];
+  featureEyebrow?: string;
+  featureHeading?: string;
+  featureItemLabel?: string;
+  closingEyebrow?: string;
+  closingHeading?: string;
+  closingDescription?: string;
+  closingCta?: string;
   heroImage: string;
   heroImageAlt: string;
   accent: string;
@@ -55,11 +62,37 @@ export const productDetails: Record<FeaturedProductId, ProductDetail> = {
     accent: "#a33227",
     accentSoft: "#eadbd5",
   },
+  "coffee-of-the-month": {
+    id: "coffee-of-the-month",
+    eyebrow: "A new route every month",
+    roast: "Mostly light and medium roasts",
+    notes: "Rotating single origins · December Holiday Blend",
+    shortDescription: "A fresh roaster’s selection each month, chosen to keep your coffee routine curious.",
+    storyHeading: "Let the next great coffee find you",
+    story: [
+      "Coffee of the Month is built around discovery. Most months feature a single-origin coffee selected for its clarity, character, and sense of place, usually roasted light or medium so the coffee can speak for itself.",
+      "In December, the route changes for the season with a special Holiday Blend. Every selection is roasted in small batches in San Clemente and sent whole bean.",
+    ],
+    brewIntroduction: "Your first bag is roasted and shipped shortly after signup. After that, your order processes monthly on the same calendar day you joined, and each new selection is roasted and shipped fresh.",
+    brewMethods: ["Join and choose delivery", "First bag ships shortly after signup", "A new selection every month"],
+    featureEyebrow: "How the subscription works",
+    featureHeading: "Fresh coffee, on your rhythm",
+    featureItemLabel: "Step",
+    closingEyebrow: "Roaster-selected in San Clemente",
+    closingHeading: "A different coffee. A new story. Every month.",
+    closingDescription: "Your 12-ounce whole-bean selection is roasted after the order processes—not pulled from a warehouse shelf.",
+    closingCta: "Start your subscription",
+    heroImage: "/images/coffee-of-the-month-black.png",
+    heroImageAlt: "A black 12-ounce bag of Coastal Route Coffee Coffee of the Month",
+    accent: "#b47b26",
+    accentSoft: "#e6ddc8",
+  },
 };
 
 export function applyFeaturedProductCopy(product: Product): Product {
-  if (product.id !== "california-blend" && product.id !== "fogged-in") return product;
-  const detail = productDetails[product.id];
+  if (!(product.id in productDetails)) return product;
+  const productId = product.id as FeaturedProductId;
+  const detail = productDetails[productId];
   return {
     ...product,
     roast: detail.roast,

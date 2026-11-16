@@ -274,7 +274,7 @@ export async function sendOrderEmails({
           <p style="margin:20px 0;padding:16px 18px;background:#f4eee2;border-radius:12px;color:#334955;"><strong>Delivery:</strong> ${escapeHtml(delivery)}</p>
           <h2 style="margin:26px 0 10px;font-family:Georgia,'Times New Roman',serif;font-size:22px;">Deliver to</h2><p style="margin:0;color:#334955;line-height:1.7;">${addressHtml(address)}</p>
           <h2 style="margin:26px 0 10px;font-family:Georgia,'Times New Roman',serif;font-size:22px;">Tracking</h2><ul style="padding-left:20px;color:#334955;line-height:1.7;">${trackingRows}</ul>
-          ${includesSubscription ? `<p style="margin:24px 0 0;color:#52636d;font-size:15px;line-height:1.7;">Returning to review your delivery, payment method, or subscription? <a href="${CUSTOMER_PORTAL_URL}" style="color:#a66820;font-weight:700;">Manage your subscription</a>.</p>` : ""}
+          ${includesSubscription ? `<p style="margin:24px 0 0;color:#52636d;font-size:15px;line-height:1.7;">Returning to review your delivery, payment method, or subscription? <a href="${WEBSITE_URL}/subscription" style="color:#a66820;font-weight:700;">Manage your subscription</a>.</p>` : ""}
           ${mode === "sandbox" ? "<p style=\"color:#a66820;font-size:13px;\">This was a sandbox order. No real payment or postage was created.</p>" : ""}
         `,
       }),
@@ -356,6 +356,44 @@ export async function sendSubscriptionEndedEmail({
         </div>
         <p style="margin:24px 0 0;color:#52636d;font-size:15px;line-height:1.7;">Thank you for letting us be part of your coffee routine. If you decide to return, there will always be a fresh route waiting for you.</p>
         ${mode === "sandbox" ? "<p style=\"color:#a66820;font-size:13px;\">This was a sandbox subscription. No real payment was processed.</p>" : ""}
+      `,
+    }),
+  });
+}
+
+export async function sendSubscriptionAccessEmail({
+  requestId,
+  customerEmail,
+  accessUrl,
+}: {
+  requestId: string;
+  customerEmail: string;
+  accessUrl: string;
+}) {
+  const apiKey = process.env.RESEND_API_KEY;
+  const mode = getCommerceMode();
+  if (!apiKey) throw new FulfillmentConfigurationError("Subscription email is not configured.");
+  const from = process.env.FULFILLMENT_FROM_EMAIL ?? (mode === "live"
+    ? "Coastal Route Coffee <orders@coastalroutecoffee.com>"
+    : "Coastal Route Coffee <onboarding@resend.dev>");
+  const modePrefix = mode === "sandbox" ? "[TEST] " : "";
+
+  await sendEmail({
+    apiKey,
+    from,
+    to: customerEmail,
+    subject: `${modePrefix}Your secure Coastal Route subscription link`,
+    idempotencyKey: `crc-${mode}-subscription-access-${requestId}`,
+    html: brandedEmail({
+      eyebrow: "Secure subscription access",
+      title: "Manage your coffee route.",
+      introduction: "Use this secure link to review your subscription, skip the next shipment, update billing, or cancel.",
+      ctaLabel: "Manage subscription",
+      ctaHref: accessUrl,
+      content: `
+        <div style="padding:20px;background:#f4eee2;border-left:4px solid #c49a4a;border-radius:10px;color:#334955;font-size:15px;line-height:1.7;">
+          This link expires in 15 minutes and can only be used once. If you did not request it, you can safely ignore this email.
+        </div>
       `,
     }),
   });

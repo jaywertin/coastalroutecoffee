@@ -23,7 +23,7 @@ function optionLabel(option: ProductOption) {
 }
 
 function productDetailHref(productId: string) {
-  return productId === "california-blend" || productId === "fogged-in" ? `/shop/${productId}` : null;
+  return productId === "california-blend" || productId === "fogged-in" || productId === "coffee-of-the-month" ? `/shop/${productId}` : null;
 }
 
 function ProductCard({ product, inventory, onAdd, variant = "grid" }: { product: Product; inventory: Record<string, PublicInventoryStatus>; onAdd: (product: Product, option: ProductOption) => void; variant?: "grid" | "detail" }) {
@@ -81,7 +81,7 @@ function ProductCard({ product, inventory, onAdd, variant = "grid" }: { product:
           </div>
         </fieldset>
 
-        <p className="mt-4 text-xs text-[#102638]/52">{selectedInventory?.lowStock ? `Only ${selectedInventory.quantity} left · ` : "Whole bean · "}{selected.purchaseType === "subscription" ? "Manage or cancel anytime through the customer portal" : "Single purchase"}</p>
+        <p className="mt-4 text-xs text-[#102638]/52">{selectedInventory?.lowStock ? `Only ${selectedInventory.quantity} left · ` : "Whole bean · "}{selected.purchaseType === "subscription" ? "Manage, skip, or cancel from your secure subscription page" : "Single purchase"}</p>
         <button type="button" disabled={!available} className="mt-5 w-full rounded-full bg-[#102638] px-5 py-4 text-xs font-extrabold tracking-[0.13em] text-white uppercase transition enabled:hover:-translate-y-0.5 enabled:hover:bg-[#17364f] disabled:cursor-not-allowed disabled:bg-[#102638]/35" onClick={() => onAdd(product, selected)}>
           {available ? `Add to cart · ${formatPrice(selected.price)}` : "Sold out"}
         </button>

@@ -49,7 +49,7 @@ export default async function Home() {
             {products.map((product) => {
               const startingPrice = Math.min(...product.options.map((option) => option.price));
               return (
-                <Link href="/shop" key={product.id} className="product-card overflow-hidden rounded-[1.6rem] bg-[#fffdf8]">
+                <Link href={`/shop/${product.id}`} key={product.id} className="product-card overflow-hidden rounded-[1.6rem] bg-[#fffdf8]">
                   <div className="relative aspect-[4/4.4] overflow-hidden bg-[#e8dfcf]">
                     <div className="absolute inset-x-0 top-0 z-10 h-2" style={{ backgroundColor: product.accent }} />
                     <Image src={product.image} alt={product.imageAlt} fill className="object-contain p-8 transition-transform duration-500 hover:scale-[1.025]" sizes="(max-width: 768px) 100vw, 33vw" />
@@ -70,7 +70,7 @@ export default async function Home() {
       <section className="bg-[#17364f] text-white">
         <div className="grid min-h-[650px] lg:grid-cols-2">
           <div className="relative min-h-[430px] overflow-hidden lg:min-h-full">
-            <Image src="/images/coffee-of-the-month-label.png" alt="Coffee of the Month label with a gold world map" fill className="bg-[#e8dfcf] object-contain p-9 sm:p-16" sizes="(max-width: 1024px) 100vw, 50vw" />
+            <Image src="/images/coffee-of-the-month-black.png" alt="Black 12-ounce Coffee of the Month bag with a gold world map label" fill className="bg-[#e8dfcf] object-contain p-9 sm:p-14" sizes="(max-width: 1024px) 100vw, 50vw" />
           </div>
           <div className="flex items-center px-7 py-20 sm:px-14 lg:px-20">
             <div className="max-w-xl">
@@ -78,11 +78,11 @@ export default async function Home() {
               <h2 className="font-display mt-5 text-5xl leading-[0.95] tracking-[-0.04em] sm:text-6xl">{content.featuredTitle}</h2>
               <p className="mt-7 text-base leading-7 text-white/72">{content.featuredBody}</p>
               <ul className="mt-8 grid gap-4 text-sm text-white/85">
-                <li className="flex gap-3"><span className="text-[#e2b45d]">✓</span> A different roaster’s selection</li>
+                <li className="flex gap-3"><span className="text-[#e2b45d]">✓</span> Mostly single-origin, light or medium roast</li>
                 <li className="flex gap-3"><span className="text-[#e2b45d]">✓</span> Freshly roasted in San Clemente</li>
-                <li className="flex gap-3"><span className="text-[#e2b45d]">✓</span> Manage or cancel anytime through the customer portal</li>
+                <li className="flex gap-3"><span className="text-[#e2b45d]">✓</span> Manage, skip, or cancel your subscription</li>
               </ul>
-              <Link href="/shop" className="button-primary mt-10">Choose your subscription <Arrow /></Link>
+              <Link href="/shop/coffee-of-the-month" className="button-primary mt-10">Choose your subscription <Arrow /></Link>
             </div>
           </div>
         </div>

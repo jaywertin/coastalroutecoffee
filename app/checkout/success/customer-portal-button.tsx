@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export function CustomerPortalButton() {
+  const router = useRouter();
   const [loadingAction, setLoadingAction] = useState<"manage" | "cancel" | null>(null);
   const [error, setError] = useState("");
 
@@ -29,8 +31,8 @@ export function CustomerPortalButton() {
   return (
     <div className="mt-4">
       <div className="flex flex-col gap-3 sm:flex-row">
-        <button type="button" className="button-dark w-full sm:w-auto" onClick={() => openPortal("manage")} disabled={loadingAction !== null}>
-          {loadingAction === "manage" ? "Opening…" : "Manage billing"}
+        <button type="button" className="button-dark w-full sm:w-auto" onClick={() => router.push("/subscription")} disabled={loadingAction !== null}>
+          Manage subscription
         </button>
         <button
           type="button"

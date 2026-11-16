@@ -1,6 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import { CUSTOMER_PORTAL_URL } from "@/lib/site";
 import { getWebsiteContent } from "@/lib/site-content";
 
 export async function SiteHeader({ dark = false, solidWordmark = false, largeBrand = false }: { dark?: boolean; solidWordmark?: boolean; largeBrand?: boolean }) {
@@ -23,15 +22,10 @@ export async function SiteHeader({ dark = false, solidWordmark = false, largeBra
           <Link href="/our-story" className="hidden sm:block">Our story</Link>
           <Link href="/shipping" className="hidden md:block">Delivery</Link>
           <Link href="/contact" className="hidden lg:block">Contact</Link>
-          <a
-            href={CUSTOMER_PORTAL_URL}
-            target="_blank"
-            rel="noreferrer"
-            aria-label="Manage your subscription (opens in a new tab)"
-          >
+          <Link href="/subscription">
             <span className="sm:hidden">Manage</span>
             <span className="hidden sm:inline">Manage subscription</span>
-          </a>
+          </Link>
         </nav>
       </header>
     </>

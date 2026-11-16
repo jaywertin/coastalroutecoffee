@@ -3,6 +3,7 @@ import { createOrderAccess, ORDER_ACCESS_COOKIE, orderAccessCookieOptions } from
 import { enforceRateLimit } from "@/lib/http-security";
 import { getApplicationUrl } from "@/lib/site";
 import { getStripe } from "@/lib/stripe";
+import { createSubscriptionSession, SUBSCRIPTION_ACCESS_COOKIE, subscriptionAccessCookieOptions } from "@/lib/subscription-access";
 
 export const runtime = "nodejs";
 
@@ -20,6 +21,11 @@ export async function GET(request: Request) {
     const token = await createOrderAccess(session.id);
     const response = NextResponse.redirect(destination);
     response.cookies.set(ORDER_ACCESS_COOKIE, token, orderAccessCookieOptions);
+    const subscriptionId = typeof session.subscription === "string" ? session.subscription : session.subscription?.id;
+    if (subscriptionId) {
+      const subscriptionToken = await createSubscriptionSession(subscriptionId);
+      response.cookies.set(SUBSCRIPTION_ACCESS_COOKIE, subscriptionToken, subscriptionAccessCookieOptions);
+    }
     response.headers.set("Cache-Control", "no-store");
     return response;
   } catch {
