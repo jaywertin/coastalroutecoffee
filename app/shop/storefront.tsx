@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { formatPrice, type Product, type ProductOption } from "@/lib/products";
+import { productDetailHref, productShopAnchor } from "@/lib/product-shopping";
 import { formatShippingService, isLocalDeliveryZip, type ShippingQuote } from "@/lib/shipping";
 import type { CommerceMode } from "@/lib/commerce";
 import type { PublicInventoryStatus } from "@/lib/inventory";
@@ -22,18 +23,15 @@ function optionLabel(option: ProductOption) {
   return `${option.size} · ${option.purchaseType === "subscription" ? "Monthly" : "One-time"}`;
 }
 
-function productDetailHref(productId: string) {
-  return productId === "california-blend" || productId === "fogged-in" || productId === "coffee-of-the-month" ? `/shop/${productId}` : null;
-}
-
 function ProductCard({ product, inventory, onAdd, variant = "grid" }: { product: Product; inventory: Record<string, PublicInventoryStatus>; onAdd: (product: Product, option: ProductOption) => void; variant?: "grid" | "detail" }) {
   const [selectedId, setSelectedId] = useState(() => product.options.find((option) => inventory[option.inventorySku]?.available)?.id ?? product.options[0].id);
   const selected = product.options.find((option) => option.id === selectedId) ?? product.options[0];
   const selectedInventory = inventory[selected.inventorySku];
   const available = selectedInventory?.available ?? true;
+  const detailHref = variant === "grid" ? productDetailHref(product.id) : null;
 
   return (
-    <article className={`flex h-full flex-col overflow-hidden rounded-[1.75rem] border border-[#102638]/10 bg-[#fffdf8] shadow-[0_24px_70px_rgba(15,31,46,0.07)] ${variant === "detail" ? "lg:min-h-[38rem]" : ""}`}>
+    <article id={variant === "grid" ? productShopAnchor(product.id) : undefined} className={`scroll-mt-24 flex h-full flex-col overflow-hidden rounded-[1.75rem] border border-[#102638]/10 bg-[#fffdf8] shadow-[0_24px_70px_rgba(15,31,46,0.07)] ${variant === "detail" ? "lg:min-h-[38rem]" : ""}`}>
       {variant === "grid" ? <div className="relative aspect-[4/4.3] overflow-hidden bg-[#e8dfcf]">
         <div className="absolute inset-x-0 top-0 h-2" style={{ backgroundColor: product.accent }} />
         <Image
@@ -49,14 +47,14 @@ function ProductCard({ product, inventory, onAdd, variant = "grid" }: { product:
         {variant === "detail" ? <p className="eyebrow mb-6" style={{ color: product.accent }}>{product.roast}</p> : null}
         <div className="flex items-start justify-between gap-5">
           <h2 className={`font-display leading-none ${variant === "detail" ? "text-4xl" : "text-3xl"}`}>
-            {productDetailHref(product.id) && variant === "grid" ? <Link href={productDetailHref(product.id)!}>{product.name}</Link> : product.name}
+            {detailHref ? <Link href={detailHref}>{product.name}</Link> : product.name}
           </h2>
           <strong className="whitespace-nowrap text-base">{formatPrice(selected.price)}{selected.purchaseType === "subscription" ? "/mo" : ""}</strong>
         </div>
         <p className="mt-3 text-sm font-semibold text-[#9b6a2d]">{product.notes}</p>
         <p className="mt-4 min-h-20 text-sm leading-6 text-[#102638]/62">{product.description}</p>
-        {productDetailHref(product.id) && variant === "grid" ? (
-          <Link className="mt-1 text-xs font-extrabold tracking-[0.11em] text-[#102638] uppercase underline decoration-[#d5a04d] decoration-2 underline-offset-4" href={productDetailHref(product.id)!}>
+        {detailHref ? (
+          <Link className="mt-1 text-xs font-extrabold tracking-[0.11em] text-[#102638] uppercase underline decoration-[#d5a04d] decoration-2 underline-offset-4" href={detailHref}>
             Explore this coffee
           </Link>
         ) : null}
