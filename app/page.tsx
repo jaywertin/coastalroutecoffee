@@ -4,6 +4,7 @@ import { SiteFooter } from "@/app/_components/site-footer";
 import { SiteHeader } from "@/app/_components/site-header";
 import { getPublicProducts } from "@/lib/product-catalog";
 import { formatPrice } from "@/lib/products";
+import { productShopHref, productSizeLabel } from "@/lib/product-shopping";
 import { getWebsiteContent } from "@/lib/site-content";
 
 function Arrow() {
@@ -49,7 +50,7 @@ export default async function Home() {
             {products.map((product) => {
               const startingPrice = Math.min(...product.options.map((option) => option.price));
               return (
-                <Link href={`/shop/${product.id}`} key={product.id} className="product-card overflow-hidden rounded-[1.6rem] bg-[#fffdf8]">
+                <Link href={productShopHref(product.id)} key={product.id} className="product-card overflow-hidden rounded-[1.6rem] bg-[#fffdf8]">
                   <div className="relative aspect-[4/4.4] overflow-hidden bg-[#e8dfcf]">
                     <div className="absolute inset-x-0 top-0 z-10 h-2" style={{ backgroundColor: product.accent }} />
                     <Image src={product.image} alt={product.imageAlt} fill className="object-contain p-8 transition-transform duration-500 hover:scale-[1.025]" sizes="(max-width: 768px) 100vw, 33vw" />
@@ -58,7 +59,7 @@ export default async function Home() {
                   <div className="p-6 sm:p-7">
                     <div className="flex items-start justify-between gap-4"><h3 className="font-display text-2xl tracking-[-0.02em]">{product.name}</h3><span className="text-sm font-bold">From {formatPrice(startingPrice)}</span></div>
                     <p className="mt-3 min-h-12 text-sm leading-6 text-[#102638]/60">{product.notes}</p>
-                    <div className="mt-6 flex items-center justify-between border-t border-[#102638]/10 pt-5 text-[0.68rem] font-bold tracking-[0.13em] uppercase"><span>{product.id === "coffee-of-the-month" ? "12 oz monthly" : "12 oz or 2 lb"}</span><span aria-hidden="true">→</span></div>
+                    <div className="mt-6 flex items-center justify-between border-t border-[#102638]/10 pt-5 text-[0.68rem] font-bold tracking-[0.13em] uppercase"><span>{productSizeLabel(product.options)}</span><span aria-hidden="true">→</span></div>
                   </div>
                 </Link>
               );
