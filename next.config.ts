@@ -24,6 +24,12 @@ const nextConfig: NextConfig = {
       search: "",
     }],
   },
+  async redirects() {
+    return [
+      { source: "/product/coffee-of-the-month", destination: "/shop/coffee-of-the-month", permanent: true },
+      { source: "/product/california-blend-subscription", destination: "/shop/california-blend", permanent: true },
+    ];
+  },
   async headers() {
     return [{
       source: "/:path*",
