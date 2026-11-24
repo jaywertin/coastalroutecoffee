@@ -10,6 +10,7 @@ import {
   saveFulfillmentProgress,
 } from "@/lib/fulfillment-store";
 import { sendOrderEmails } from "@/lib/notifications";
+import { orderPaymentFromCheckout, orderPaymentFromInvoice } from "@/lib/order-payment";
 import { buildShippingParcels, isLocalDeliveryZip } from "@/lib/shipping";
 import { createShippoLabels, type ShippoRecipient } from "@/lib/shippo";
 import { getStripe } from "@/lib/stripe";
@@ -148,6 +149,7 @@ export async function fulfillCheckoutSession(session: Stripe.Checkout.Session) {
       await sendOrderEmails({
         orderId: session.id,
         orderNumber,
+        payment: orderPaymentFromCheckout(session),
         customerEmail: session.customer_details?.email ?? "Not supplied",
         address,
         items: resolvedItems.map(({ product, option, quantity }) => ({
@@ -263,6 +265,7 @@ export async function fulfillSubscriptionRenewal(invoice: Stripe.Invoice) {
       await sendOrderEmails({
         orderId: invoice.id,
         orderNumber,
+        payment: orderPaymentFromInvoice(invoice),
         customerEmail: customer.email ?? invoice.customer_email ?? "Not supplied",
         address,
         items: [{ name: "Monthly coffee subscription renewal", quantity: parcels.length }],
