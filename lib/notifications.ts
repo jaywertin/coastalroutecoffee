@@ -2,6 +2,7 @@ import type { ShippoLabel, ShippoRecipient } from "@/lib/shippo";
 import { getCommerceMode } from "@/lib/commerce";
 import { FulfillmentConfigurationError } from "@/lib/fulfillment-store";
 import { formatOrderNumber } from "@/lib/order-number-utils";
+import { orderPaymentRows, type OrderPayment } from "@/lib/order-payment";
 import { CUSTOMER_PORTAL_URL, WEBSITE_URL } from "@/lib/site";
 
 const MERCHANT_EMAIL = "coastalroutecoffee@gmail.com";
@@ -91,6 +92,7 @@ async function sendEmail({
   to,
   subject,
   html,
+  text,
   idempotencyKey,
   replyTo = REPLY_TO_EMAIL,
 }: {
@@ -99,6 +101,7 @@ async function sendEmail({
   to: string;
   subject: string;
   html: string;
+  text?: string;
   idempotencyKey: string;
   replyTo?: string;
 }) {
@@ -109,7 +112,7 @@ async function sendEmail({
       "Content-Type": "application/json",
       "Idempotency-Key": idempotencyKey,
     },
-    body: JSON.stringify({ from, to: [to], reply_to: replyTo, subject, html }),
+    body: JSON.stringify({ from, to: [to], reply_to: replyTo, subject, html, text }),
     cache: "no-store",
     signal: AbortSignal.timeout(8_000),
   });
@@ -198,6 +201,7 @@ export async function sendOrderEmails({
   items,
   delivery,
   labels,
+  payment,
 }: {
   orderId: string;
   orderNumber: number;
@@ -206,6 +210,7 @@ export async function sendOrderEmails({
   items: Array<{ name: string; quantity: number }>;
   delivery: string;
   labels: ShippoLabel[];
+  payment: OrderPayment;
 }) {
   const apiKey = process.env.RESEND_API_KEY;
   const mode = getCommerceMode();
@@ -257,7 +262,32 @@ export async function sendOrderEmails({
   })];
 
   if (customerEmail.includes("@")) {
+    const paymentRows = orderPaymentRows(payment);
+    const paymentHtml = paymentRows.length
+      ? `<h2 style="margin:26px 0 10px;font-family:Georgia,'Times New Roman',serif;font-size:22px;">Payment summary</h2><dl style="margin:0;padding:16px 18px;background:#f4eee2;border-radius:12px;color:#334955;">${paymentRows.map(({ label, amount }) => `<div style="margin:0 0 6px;"><dt style="display:inline;">${escapeHtml(label)}:</dt> <dd style="display:inline;margin:0;font-weight:700;">${escapeHtml(amount)}</dd></div>`).join("")}</dl>`
+      : "";
+    const trackingText = labels.flatMap(({ trackingNumber, trackingUrl }) =>
+      trackingUrl ? [`Track package ${trackingNumber}: ${trackingUrl}`] : []);
+    const text = [
+      "Your Coffee Is En Route!",
+      "Your order is confirmed, and we’ll prepare your coffee with care.",
+      "",
+      `Order: ${displayOrderNumber}`,
+      ...items.map(({ name, quantity }) => `${quantity} × ${name}`),
+      ...(paymentRows.length ? ["", "Payment summary", ...paymentRows.map(({ label, amount }) => `${label}: ${amount}`)] : []),
+      "",
+      `Delivery: ${delivery}`,
+      "Deliver to:",
+      ...[address.name, address.street1, address.street2, `${address.city}, ${address.state} ${address.zip}`, address.country].filter(Boolean),
+      ...trackingText,
+      ...(includesSubscription ? ["", `Manage your subscription: ${WEBSITE_URL}/subscription`] : []),
+      ...(mode === "sandbox" ? ["", "This was a sandbox order. No real payment or postage was created."] : []),
+      "",
+      `Continue your route: ${WEBSITE_URL}`,
+      `Questions? Reply to this email or contact ${REPLY_TO_EMAIL}.`,
+    ].join("\n");
     deliveries.push(sendEmail({
+      text,
       apiKey,
       from,
       to: customerEmail,
@@ -271,6 +301,7 @@ export async function sendOrderEmails({
         content: `
           <p style="margin:0 0 20px;padding:16px 18px;background:#f4eee2;border-radius:12px;color:#334955;"><strong>Order:</strong> ${displayOrderNumber}</p>
           <h2 style="margin:0 0 10px;font-family:Georgia,'Times New Roman',serif;font-size:22px;">Your coffee</h2><ul style="padding-left:20px;color:#334955;line-height:1.7;">${itemRows}</ul>
+          ${paymentHtml}
           <p style="margin:20px 0;padding:16px 18px;background:#f4eee2;border-radius:12px;color:#334955;"><strong>Delivery:</strong> ${escapeHtml(delivery)}</p>
           <h2 style="margin:26px 0 10px;font-family:Georgia,'Times New Roman',serif;font-size:22px;">Deliver to</h2><p style="margin:0;color:#334955;line-height:1.7;">${addressHtml(address)}</p>
           <h2 style="margin:26px 0 10px;font-family:Georgia,'Times New Roman',serif;font-size:22px;">Tracking</h2><ul style="padding-left:20px;color:#334955;line-height:1.7;">${trackingRows}</ul>
